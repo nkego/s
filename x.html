@@ -853,7 +853,7 @@
         countryInfo.classList.remove('hidden');
         countryInfo.classList.add('animate-slide-in');
       } else {
-        result.textContent = lang === 'ru' ? 'Страна не найдена' : 'Country not found';
+        result.textContent = lang === 'ru' ? 'страна не найдена ((' : 'Country not found';
         result.classList.add('error', 'animate-shake');
       }
       toggleClearButton();
