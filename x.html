@@ -333,7 +333,8 @@
       transform: translate(-50%, -50%);
       z-index: 30;
       width: 90%;
-      max-width: 320px;
+      max-width: 300px;
+      border-radius: 8px;
     }
     #themeModal.hidden {
       opacity: 0;
@@ -445,15 +446,26 @@
     #nextQuestion, #resetQuiz {
       background-color: var(--button-bg);
       color: white;
+      padding: 0.75rem;
+      border-radius: 8px;
+      transition: background-color 0.2s ease, transform 0.2s ease;
     }
     #nextQuestion:hover, #resetQuiz:hover {
       background-color: var(--button-hover);
+      transform: scale(1.03);
     }
     #nextQuestion:active, #resetQuiz:active {
       transform: scale(0.95);
     }
     #quizScore {
-      animation: slide-in 0.4s ease-out;
+      background-color: var(--suggestions-bg);
+      border: 1px solid var(--suggestions-border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+      font-weight: 500;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      animation: pulse-grow 0.4s ease-out;
     }
     #quizOptions.fade-out {
       animation: fade-out 0.3s ease-out forwards;
@@ -548,7 +560,7 @@
     <div id="themeModal" class="p-4 rounded-lg shadow-lg hidden animate-modal-fade-in">
       <div class="flex justify-between items-center mb-4">
         <h2 id="modalTitle" class="text-lg font-medium">Выберите тему</h2>
-        <button id="closeModal" class="text-gray-500 hover:text-gray-700">&times;</button>
+        <button id="closeModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
       </div>
       <ul id="themeList" class="space-y-2"></ul>
     </div>
@@ -559,7 +571,6 @@
   </div>
 
   <script>
-    // массив стран
     const countries = {
       "Абхазия": { capital: "Сухум", code: "ab", en: "Abkhazia", enCapital: "Sukhumi", region: "Азия", population: "100,000", language: "Абхазский, Русский" },
       "Австралия": { capital: "Канберра", code: "au", en: "Australia", enCapital: "Canberra", region: "Океания", population: "400,000", language: "Английский" },
@@ -758,11 +769,9 @@
       "Япония": { capital: "Токио", code: "jp", en: "Japan", enCapital: "Tokyo", region: "Азия", population: "14,000,000", language: "Японский" }
     };
 
-    // Инициализация счётчика
     let correctAnswers = parseInt(localStorage.getItem('correctAnswers')) || 0;
     let incorrectAnswers = parseInt(localStorage.getItem('incorrectAnswers')) || 0;
 
-    // Функция для автодополнения
     function showSuggestions(input) {
       const suggestions = document.getElementById('suggestions');
       suggestions.innerHTML = '';
@@ -795,14 +804,12 @@
       }
     }
 
-    // Функция для показа/скрытия кнопки очистки
     function toggleClearButton() {
       const input = document.getElementById('countryInput');
       const clearButton = document.getElementById('clearInput');
       clearButton.classList.toggle('hidden', input.value.trim() === '');
     }
 
-    // Функция поиска столицы
     function findCapital() {
       const input = document.getElementById('countryInput').value.trim();
       const lang = localStorage.getItem('language') || 'ru';
@@ -830,6 +837,7 @@
         img.src = flag;
         img.alt = `Flag of ${country.en}`;
         img.className = 'w-6 h-6';
+        img.setAttribute('loading', 'lazy');
         const spinner = document.createElement('span');
         spinner.className = 'flag-spinner active';
         result.appendChild(spinner);
@@ -859,19 +867,17 @@
       toggleClearButton();
     }
 
-    // Функция для обновления счётчика
     function updateScore() {
       const lang = localStorage.getItem('language') || 'ru';
       const quizScore = document.getElementById('quizScore');
       quizScore.textContent = lang === 'ru' 
-        ? `Правильных: ${correctAnswers}, Неправильных: ${incorrectAnswers}`
+        ? `Верно: ${correctAnswers}   Неверно: ${incorrectAnswers}`
         : `Correct: ${correctAnswers}, Incorrect: ${incorrectAnswers}`;
       quizScore.classList.remove('pulse-grow');
-      void quizScore.offsetWidth; // Trigger reflow
+      void quizScore.offsetWidth;
       quizScore.classList.add('pulse-grow');
     }
 
-    // Функция для переключения вкладок
     function showTab(tab) {
       const searchContainer = document.getElementById('searchContainer');
       const quizContainer = document.getElementById('quizContainer');
@@ -893,7 +899,6 @@
       }
     }
 
-    // Функция для запуска викторины
     function startQuiz() {
       const lang = localStorage.getItem('language') || 'ru';
       const quizQuestion = document.getElementById('quizQuestion');
@@ -920,6 +925,7 @@
       img.src = flag;
       img.alt = `Flag of ${country.en}`;
       img.className = 'w-6 h-6';
+      img.setAttribute('loading', 'lazy');
       const spinner = document.createElement('span');
       spinner.className = 'flag-spinner active';
       quizQuestion.innerHTML = `<span>${lang === 'ru' ? 'Назови столицу' : 'Name the capital'}: ${lang === 'ru' ? randomCountry : country.en}</span>`;
@@ -951,7 +957,6 @@
       });
     }
 
-    // Функция для проверки ответа
     function checkAnswer(selected, correct) {
       const quizOptions = document.getElementById('quizOptions');
       const nextQuestion = document.getElementById('nextQuestion');
@@ -985,7 +990,6 @@
       }, 300);
     }
 
-    // Функция для сброса викторины
     function resetQuiz() {
       correctAnswers = 0;
       incorrectAnswers = 0;
@@ -994,7 +998,6 @@
       startQuiz();
     }
 
-    // Функция переключения темы
     function toggleTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
       localStorage.setItem('theme', theme);
@@ -1004,33 +1007,20 @@
       closeThemeModal();
     }
 
-    // Открытие модального окна тем
     function openThemeModal() {
       const modal = document.getElementById('themeModal');
       const overlay = document.getElementById('modalOverlay');
-      modal.style.opacity = '0';
       modal.classList.remove('hidden');
       overlay.classList.remove('hidden');
-      modal.style.top = '50%';
-      modal.style.left = '50%';
-      modal.style.transform = 'translate(-50%, -50%)';
-      setTimeout(() => {
-        modal.style.opacity = '1';
-      }, 0);
     }
 
-    // Закрытие модального окна
     function closeThemeModal() {
       const modal = document.getElementById('themeModal');
       const overlay = document.getElementById('modalOverlay');
-      modal.style.opacity = '0';
-      setTimeout(() => {
-        modal.classList.add('hidden');
-        overlay.classList.add('hidden');
-      }, 300);
+      modal.classList.add('hidden');
+      overlay.classList.add('hidden');
     }
 
-    // Функция переключения языка
     function toggleLanguage() {
       const langToggle = document.getElementById('langToggle');
       langToggle.classList.add('active');
@@ -1051,7 +1041,6 @@
       showTab(localStorage.getItem('activeTab') || 'search');
     }
 
-    // Обновление текстов интерфейса
     function updateUIText(lang) {
       document.getElementById('header').textContent = lang === 'ru' ? 'Столицы стран' : 'Country Capitals';
       document.getElementById('pageTitle').textContent = lang === 'ru' ? 'Столицы стран' : 'Country Capitals';
@@ -1067,7 +1056,6 @@
       updateThemeOptions(lang);
     }
 
-    // Обновление опций тем
     function updateThemeOptions(lang) {
       const themeList = document.getElementById('themeList');
       themeList.innerHTML = '';
@@ -1090,7 +1078,6 @@
       });
     }
 
-    // Инициализация
     const savedLang = localStorage.getItem('language') || 'ru';
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -1100,7 +1087,6 @@
     toggleClearButton();
     showTab('search');
 
-    // Обработчики событий
     document.getElementById('themeToggle').addEventListener('click', openThemeModal);
     document.getElementById('closeModal').addEventListener('click', closeThemeModal);
     document.getElementById('modalOverlay').addEventListener('click', closeThemeModal);
