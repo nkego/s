@@ -42,8 +42,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Найдите столицу любой страны или проверьте свои знания в викторине с счётчиком ответов.">
-  <meta name="keywords" content="столицы, страны, поиск столиц, викторина, география">
+  <meta name="description" content="Найдите столицу любой страны, проверьте свои знания в викторине по столицам или угадайте страну по флагу.">
+  <meta name="keywords" content="столицы, страны, поиск столиц, викторина, флаги, география">
   <title id="pageTitle">Столицы стран</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -355,7 +355,7 @@
       background-color: var(--suggestions-bg);
       border-color: var(--suggestions-border);
     }
-    #result img, #quizQuestion img {
+    #result img, #quizQuestion img, #flagQuizQuestion img {
       width: 24px;
       height: 24px;
       object-fit: contain;
@@ -443,21 +443,21 @@
       background-color: var(--quiz-incorrect-bg);
       color: white;
     }
-    #nextQuestion, #resetQuiz {
+    #nextQuestion, #resetQuiz, #nextFlagQuestion, #resetFlagQuiz {
       background-color: var(--button-bg);
       color: white;
       padding: 0.75rem;
       border-radius: 8px;
       transition: background-color 0.2s ease, transform 0.2s ease;
     }
-    #nextQuestion:hover, #resetQuiz:hover {
+    #nextQuestion:hover, #resetQuiz:hover, #nextFlagQuestion:hover, #resetFlagQuiz:hover {
       background-color: var(--button-hover);
       transform: scale(1.03);
     }
-    #nextQuestion:active, #resetQuiz:active {
+    #nextQuestion:active, #resetQuiz:active, #nextFlagQuestion:active, #resetFlagQuiz:active {
       transform: scale(0.95);
     }
-    #quizScore {
+    #quizScore, #flagQuizScore {
       background-color: var(--suggestions-bg);
       border: 1px solid var(--suggestions-border);
       border-radius: 8px;
@@ -467,7 +467,7 @@
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       animation: pulse-grow 0.4s ease-out;
     }
-    #quizOptions.fade-out {
+    #quizOptions.fade-out, #flagQuizOptions.fade-out {
       animation: fade-out 0.3s ease-out forwards;
     }
     #authorLink {
@@ -518,6 +518,7 @@
     <nav class="flex gap-2 mb-4">
       <button id="tabSearch" class="tab active">Поиск</button>
       <button id="tabQuiz" class="tab">Викторина</button>
+      <button id="tabFlagQuiz" class="tab">Викторина 2</button>
     </nav>
     <div id="searchContainer">
       <div class="relative">
@@ -553,6 +554,19 @@
           Далее
         </button>
         <button id="resetQuiz" class="w-full text-white p-3 rounded-lg hover:shadow-lg transition transform duration-200 font-medium">
+          Начать заново
+        </button>
+      </div>
+    </div>
+    <div id="flagQuizContainer" class="hidden">
+      <div id="flagQuizScore" class="text-center text-lg mb-4"></div>
+      <div id="flagQuizQuestion" class="text-center text-lg flex items-center justify-center gap-2 mb-4"></div>
+      <div id="flagQuizOptions" class="grid gap-2"></div>
+      <div class="flex gap-2 mt-4">
+        <button id="nextFlagQuestion" class="w-full text-white p-3 rounded-lg hover:shadow-lg transition transform duration-200 font-medium hidden">
+          Далее
+        </button>
+        <button id="resetFlagQuiz" class="w-full text-white p-3 rounded-lg hover:shadow-lg transition transform duration-200 font-medium">
           Начать заново
         </button>
       </div>
@@ -771,6 +785,8 @@
 
     let correctAnswers = parseInt(localStorage.getItem('correctAnswers')) || 0;
     let incorrectAnswers = parseInt(localStorage.getItem('incorrectAnswers')) || 0;
+    let flagCorrectAnswers = parseInt(localStorage.getItem('flagCorrectAnswers')) || 0;
+    let flagIncorrectAnswers = parseInt(localStorage.getItem('flagIncorrectAnswers')) || 0;
 
     function showSuggestions(input) {
       const suggestions = document.getElementById('suggestions');
@@ -867,27 +883,42 @@
       toggleClearButton();
     }
 
-    function updateScore() {
+    function updateQuizScore() {
       const lang = localStorage.getItem('language') || 'ru';
       const quizScore = document.getElementById('quizScore');
       quizScore.textContent = lang === 'ru' 
-        ? `Верно: ${correctAnswers}   Неверно: ${incorrectAnswers}`
+        ? `Верно: ${correctAnswers}, Неверно: ${incorrectAnswers}`
         : `Correct: ${correctAnswers}, Incorrect: ${incorrectAnswers}`;
       quizScore.classList.remove('pulse-grow');
       void quizScore.offsetWidth;
       quizScore.classList.add('pulse-grow');
     }
 
+    function updateFlagQuizScore() {
+      const lang = localStorage.getItem('language') || 'ru';
+      const flagQuizScore = document.getElementById('flagQuizScore');
+      flagQuizScore.textContent = lang === 'ru' 
+        ? `Верно: ${flagCorrectAnswers}, Неверно: ${flagIncorrectAnswers}`
+        : `Correct: ${flagCorrectAnswers}, Incorrect: ${flagIncorrectAnswers}`;
+      flagQuizScore.classList.remove('pulse-grow');
+      void flagQuizScore.offsetWidth;
+      flagQuizScore.classList.add('pulse-grow');
+    }
+
     function showTab(tab) {
       const searchContainer = document.getElementById('searchContainer');
       const quizContainer = document.getElementById('quizContainer');
+      const flagQuizContainer = document.getElementById('flagQuizContainer');
       const tabSearch = document.getElementById('tabSearch');
       const tabQuiz = document.getElementById('tabQuiz');
+      const tabFlagQuiz = document.getElementById('tabFlagQuiz');
 
       tabSearch.classList.remove('active');
       tabQuiz.classList.remove('active');
+      tabFlagQuiz.classList.remove('active');
       searchContainer.classList.add('hidden');
       quizContainer.classList.add('hidden');
+      flagQuizContainer.classList.add('hidden');
 
       if (tab === 'search') {
         tabSearch.classList.add('active');
@@ -896,6 +927,10 @@
         tabQuiz.classList.add('active');
         quizContainer.classList.remove('hidden');
         startQuiz();
+      } else if (tab === 'flagQuiz') {
+        tabFlagQuiz.classList.add('active');
+        flagQuizContainer.classList.remove('hidden');
+        startFlagQuiz();
       }
     }
 
@@ -908,7 +943,7 @@
       quizOptions.innerHTML = '';
       quizOptions.classList.remove('fade-out');
       nextQuestion.classList.add('hidden');
-      updateScore();
+      updateQuizScore();
 
       const countryKeys = Object.keys(countries);
       if (countryKeys.length < 2) {
@@ -952,12 +987,70 @@
         const button = document.createElement('button');
         button.textContent = option;
         button.className = 'quiz-option';
-        button.addEventListener('click', () => checkAnswer(option, correctCapital));
+        button.addEventListener('click', () => checkQuizAnswer(option, correctCapital));
         quizOptions.appendChild(button);
       });
     }
 
-    function checkAnswer(selected, correct) {
+    function startFlagQuiz() {
+      const lang = localStorage.getItem('language') || 'ru';
+      const flagQuizQuestion = document.getElementById('flagQuizQuestion');
+      const flagQuizOptions = document.getElementById('flagQuizOptions');
+      const nextFlagQuestion = document.getElementById('nextFlagQuestion');
+      
+      flagQuizOptions.innerHTML = '';
+      flagQuizOptions.classList.remove('fade-out');
+      nextFlagQuestion.classList.add('hidden');
+      updateFlagQuizScore();
+
+      const countryKeys = Object.keys(countries);
+      if (countryKeys.length < 2) {
+        flagQuizQuestion.innerHTML = `<span>${lang === 'ru' ? 'Недостаточно стран для викторины' : 'Not enough countries for quiz'}</span>`;
+        return;
+      }
+      
+      const randomCountry = countryKeys[Math.floor(Math.random() * countryKeys.length)];
+      const country = countries[randomCountry];
+      const flag = `https://flagcdn.com/96x72/${country.code}.png`;
+      const correctCountry = lang === 'ru' ? randomCountry : country.en;
+      
+      const img = document.createElement('img');
+      img.src = flag;
+      img.alt = `Flag of ${country.en}`;
+      img.className = 'w-6 h-6';
+      img.setAttribute('loading', 'lazy');
+      const spinner = document.createElement('span');
+      spinner.className = 'flag-spinner active';
+      flagQuizQuestion.innerHTML = `<span>${lang === 'ru' ? 'Назови страну' : 'Name the country'}</span>`;
+      flagQuizQuestion.appendChild(spinner);
+      img.onload = () => {
+        spinner.remove();
+        flagQuizQuestion.classList.add('animate-flip-in');
+      };
+      img.onerror = () => {
+        spinner.remove();
+        flagQuizQuestion.innerHTML = `<span>${lang === 'ru' ? 'Ошибка загрузки флага' : 'Flag loading error'}</span>`;
+        flagQuizQuestion.classList.add('error', 'animate-shake');
+      };
+      flagQuizQuestion.appendChild(img);
+
+      const allCountries = countryKeys.map(key => lang === 'ru' ? key : countries[key].en);
+      const wrongCountries = allCountries
+        .filter(c => c !== correctCountry)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 1);
+      const options = [correctCountry, ...wrongCountries].sort(() => Math.random() - 0.5);
+
+      options.forEach(option => {
+        const button = document.createElement('button');
+        button.textContent = option;
+        button.className = 'quiz-option';
+        button.addEventListener('click', () => checkFlagQuizAnswer(option, correctCountry));
+        flagQuizOptions.appendChild(button);
+      });
+    }
+
+    function checkQuizAnswer(selected, correct) {
       const quizOptions = document.getElementById('quizOptions');
       const nextQuestion = document.getElementById('nextQuestion');
 
@@ -982,11 +1075,44 @@
       }
       localStorage.setItem('correctAnswers', correctAnswers);
       localStorage.setItem('incorrectAnswers', incorrectAnswers);
-      updateScore();
+      updateQuizScore();
 
       quizOptions.classList.add('fade-out');
       setTimeout(() => {
         nextQuestion.classList.remove('hidden');
+      }, 300);
+    }
+
+    function checkFlagQuizAnswer(selected, correct) {
+      const flagQuizOptions = document.getElementById('flagQuizOptions');
+      const nextFlagQuestion = document.getElementById('nextFlagQuestion');
+
+      flagQuizOptions.querySelectorAll('button').forEach(btn => {
+        btn.disabled = true;
+        if (btn.textContent === selected) {
+          btn.classList.add('bounce');
+          setTimeout(() => btn.classList.remove('bounce'), 400);
+        }
+        if (btn.textContent === correct) {
+          btn.classList.add('correct');
+        }
+        if (btn.textContent === selected && selected !== correct) {
+          btn.classList.add('incorrect');
+        }
+      });
+
+      if (selected === correct) {
+        flagCorrectAnswers++;
+      } else {
+        flagIncorrectAnswers++;
+      }
+      localStorage.setItem('flagCorrectAnswers', flagCorrectAnswers);
+      localStorage.setItem('flagIncorrectAnswers', flagIncorrectAnswers);
+      updateFlagQuizScore();
+
+      flagQuizOptions.classList.add('fade-out');
+      setTimeout(() => {
+        nextFlagQuestion.classList.remove('hidden');
       }, 300);
     }
 
@@ -996,6 +1122,14 @@
       localStorage.setItem('correctAnswers', correctAnswers);
       localStorage.setItem('incorrectAnswers', incorrectAnswers);
       startQuiz();
+    }
+
+    function resetFlagQuiz() {
+      flagCorrectAnswers = 0;
+      flagIncorrectAnswers = 0;
+      localStorage.setItem('flagCorrectAnswers', flagCorrectAnswers);
+      localStorage.setItem('flagIncorrectAnswers', flagIncorrectAnswers);
+      startFlagQuiz();
     }
 
     function toggleTheme(theme) {
@@ -1030,8 +1164,12 @@
       document.getElementById('langIcon').textContent = lang === 'ru' ? '🇷🇺' : '🇬🇧';
       correctAnswers = 0;
       incorrectAnswers = 0;
+      flagCorrectAnswers = 0;
+      flagIncorrectAnswers = 0;
       localStorage.setItem('correctAnswers', correctAnswers);
       localStorage.setItem('incorrectAnswers', incorrectAnswers);
+      localStorage.setItem('flagCorrectAnswers', flagCorrectAnswers);
+      localStorage.setItem('flagIncorrectAnswers', flagIncorrectAnswers);
       updateUIText(lang);
       document.getElementById('result').innerHTML = '';
       document.getElementById('countryInput').value = '';
@@ -1049,10 +1187,14 @@
       document.getElementById('modalTitle').textContent = lang === 'ru' ? 'Выберите тему' : 'Choose Theme';
       document.getElementById('tabSearch').textContent = lang === 'ru' ? 'Поиск' : 'Search';
       document.getElementById('tabQuiz').textContent = lang === 'ru' ? 'Викторина' : 'Quiz';
+      document.getElementById('tabFlagQuiz').textContent = lang === 'ru' ? 'Викторина 2' : 'Flag Quiz';
       document.getElementById('nextQuestion').textContent = lang === 'ru' ? 'Далее' : 'Next Question';
       document.getElementById('resetQuiz').textContent = lang === 'ru' ? 'Начать заново' : 'Start Over';
+      document.getElementById('nextFlagQuestion').textContent = lang === 'ru' ? 'Далее' : 'Next Question';
+      document.getElementById('resetFlagQuiz').textContent = lang === 'ru' ? 'Начать заново' : 'Start Over';
       document.getElementById('authorText').textContent = lang === 'ru' ? 'Автор' : 'Author';
-      updateScore();
+      updateQuizScore();
+      updateFlagQuizScore();
       updateThemeOptions(lang);
     }
 
@@ -1124,8 +1266,14 @@
       localStorage.setItem('activeTab', 'quiz');
       showTab('quiz');
     });
+    document.getElementById('tabFlagQuiz').addEventListener('click', () => {
+      localStorage.setItem('activeTab', 'flagQuiz');
+      showTab('flagQuiz');
+    });
     document.getElementById('nextQuestion').addEventListener('click', startQuiz);
     document.getElementById('resetQuiz').addEventListener('click', resetQuiz);
+    document.getElementById('nextFlagQuestion').addEventListener('click', startFlagQuiz);
+    document.getElementById('resetFlagQuiz').addEventListener('click', resetFlagQuiz);
     document.getElementById('authorLink').addEventListener('click', () => {
       window.open('https://t.me/nkego', '_blank');
     });
