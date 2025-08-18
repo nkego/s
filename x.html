@@ -1,0 +1,1148 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Найдите столицу любой страны или проверьте свои знания в викторине с счётчиком ответов.">
+  <meta name="keywords" content="столицы, страны, поиск столиц, викторина, география">
+  <title id="pageTitle">Столицы стран</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          animation: {
+            'pulse': 'pulse 1s ease-out',
+            'slide-up': 'slideUp 0.5s ease-out',
+            'wave-in': 'waveIn 0.4s ease-out forwards',
+            'flip-in': 'flipIn 0.6s ease-out',
+            'gradient-shift': 'gradientShift 1s ease-in-out',
+            'shake': 'shake 0.5s ease-in-out',
+            'rotate-flag': 'rotateFlag 0.4s ease-in-out',
+            'modal-fade-in': 'modalFadeIn 0.3s ease-out',
+            'slide-in': 'slideIn 0.4s ease-out',
+            'clear-pulse': 'clearPulse 0.3s ease-in-out',
+            'spin': 'spin 1s linear infinite',
+            'bounce': 'bounce 0.4s ease-out',
+            'fade-out': 'fadeOut 0.3s ease-out forwards',
+            'pulse-grow': 'pulseGrow 0.4s ease-out'
+          },
+          keyframes: {
+            pulse: {
+              '0%': { opacity: '0', transform: 'scale(0.95) translateY(-20px)' },
+              '50%': { transform: 'scale(1.05)' },
+              '100%': { opacity: '1', transform: 'scale(1) translateY(0)' }
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            waveIn: {
+              '0%': { opacity: '0', transform: 'translateX(-10px) rotateY(30deg)' },
+              '100%': { opacity: '1', transform: 'translateX(0) rotateY(0)' }
+            },
+            flipIn: {
+              '0%': { opacity: '0', transform: 'perspective(400px) rotateX(90deg)' },
+              '100%': { opacity: '1', transform: 'perspective(400px) rotateX(0)' }
+            },
+            gradientShift: {
+              '0%': { backgroundPosition: '0% 50%' },
+              '50%': { backgroundPosition: '100% 50%' },
+              '100%': { backgroundPosition: '0% 50%' }
+            },
+            shake: {
+              '0%, 100%': { transform: 'translateX(0)' },
+              '20%': { transform: 'translateX(-10px) rotate(-2deg)' },
+              '40%': { transform: 'translateX(10px) rotate(2deg)' },
+              '60%': { transform: 'translateX(-5px) rotate(-1deg)' },
+              '80%': { transform: 'translateX(5px) rotate(1deg)' }
+            },
+            rotateFlag: {
+              '0%': { transform: 'rotateY(0deg) scale(1)' },
+              '50%': { transform: 'rotateY(90deg) scale(0.8)' },
+              '100%': { transform: 'rotateY(0deg) scale(1)' }
+            },
+            modalFadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' }
+            },
+            slideIn: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            clearPulse: {
+              '0%': { transform: 'translateY(-50%) scale(1)', opacity: '0.7' },
+              '50%': { transform: 'translateY(-50%) scale(1.2)', opacity: '1' },
+              '100%': { transform: 'translateY(-50%) scale(1)', opacity: '0.7' }
+            },
+            spin: {
+              '0%': { transform: 'rotate(0deg)' },
+              '100%': { transform: 'rotate(360deg)' }
+            },
+            bounce: {
+              '0%': { transform: 'scale(1)' },
+              '50%': { transform: 'scale(1.2)' },
+              '100%': { transform: 'scale(1)' }
+            },
+            fadeOut: {
+              '0%': { opacity: '1', transform: 'scale(1)' },
+              '100%': { opacity: '0', transform: 'scale(0.95)' }
+            },
+            pulseGrow: {
+              '0%': { transform: 'scale(1)', opacity: '1' },
+              '50%': { transform: 'scale(1.1)', opacity: '0.8' },
+              '100%': { transform: 'scale(1)', opacity: '1' }
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --bg-color: #F3F4F6;
+      --bg-gradient: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
+      --text-color: #111827;
+      --input-bg: #FFFFFF;
+      --input-border: #D1D5DB;
+      --button-bg: #2563EB;
+      --button-hover: #1D4ED8;
+      --suggestions-bg: #FFFFFF;
+      --suggestions-border: #D1D5DB;
+      --suggestions-hover: #F3F4F6;
+      --theme-button-bg: #E5E7EB;
+      --theme-button-text: #374151;
+      --error-text: #EF4444;
+      --modal-bg: #FFFFFF;
+      --modal-border: #D1D5DB;
+      --success-text: #10B981;
+      --quiz-button-bg: #2563EB;
+      --quiz-button-hover: #1D4ED8;
+      --quiz-button-active: #1E40AF;
+      --quiz-correct-bg: #10B981;
+      --quiz-incorrect-bg: #EF4444;
+      transition: all 0.3s ease;
+    }
+    [data-theme="dark"] {
+      --bg-color: #111827;
+      --bg-gradient: linear-gradient(135deg, #111827 0%, #1F2937 100%);
+      --text-color: #F3F4F6;
+      --input-bg: #1F2937;
+      --input-border: #4B5563;
+      --button-bg: #1E40AF;
+      --button-hover: #1E3A8A;
+      --suggestions-bg: #1F2937;
+      --suggestions-border: #4B5563;
+      --suggestions-hover: #374151;
+      --theme-button-bg: #374151;
+      --theme-button-text: #F3F4F6;
+      --error-text: #F87171;
+      --modal-bg: #1F2937;
+      --modal-border: #4B5563;
+      --success-text: #34D399;
+      --quiz-button-bg: #1E40AF;
+      --quiz-button-hover: #1E3A8A;
+      --quiz-button-active: #1E3A8A;
+      --quiz-correct-bg: #34D399;
+      --quiz-incorrect-bg: #F87171;
+    }
+    [data-theme="sepia"] {
+      --bg-color: #F4E8D1;
+      --bg-gradient: linear-gradient(135deg, #F4E8D1 0%, #EAD7B6 100%);
+      --text-color: #5C4033;
+      --input-bg: #FFF8E7;
+      --input-border: #D4A373;
+      --button-bg: #A0522D;
+      --button-hover: #8B4513;
+      --suggestions-bg: #FFF8E7;
+      --suggestions-border: #D4A373;
+      --suggestions-hover: #EAD7B6;
+      --theme-button-bg: #D4A373;
+      --theme-button-text: #5C4033;
+      --error-text: #9B2C2C;
+      --modal-bg: #FFF8E7;
+      --modal-border: #D4A373;
+      --success-text: #8B5A2B;
+      --quiz-button-bg: #A0522D;
+      --quiz-button-hover: #8B4513;
+      --quiz-button-active: #7B3F00;
+      --quiz-correct-bg: #8B5A2B;
+      --quiz-incorrect-bg: #9B2C2C;
+    }
+    [data-theme="blue"] {
+      --bg-color: #E0F2FE;
+      --bg-gradient: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
+      --text-color: #1E3A8A;
+      --input-bg: #F0F9FF;
+      --input-border: #60A5FA;
+      --button-bg: #3B82F6;
+      --button-hover: #2563EB;
+      --suggestions-bg: #F0F9FF;
+      --suggestions-border: #60A5FA;
+      --suggestions-hover: #DBEAFE;
+      --theme-button-bg: #60A5FA;
+      --theme-button-text: #1E3A8A;
+      --error-text: #B91C1C;
+      --modal-bg: #F0F9FF;
+      --modal-border: #60A5FA;
+      --success-text: #1D4ED8;
+      --quiz-button-bg: #3B82F6;
+      --quiz-button-hover: #2563EB;
+      --quiz-button-active: #1D4ED8;
+      --quiz-correct-bg: #1D4ED8;
+      --quiz-incorrect-bg: #B91C1C;
+    }
+    [data-theme="green"] {
+      --bg-color: #D1FAE5;
+      --bg-gradient: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+      --text-color: #14532D;
+      --input-bg: #ECFDF5;
+      --input-border: #34D399;
+      --button-bg: #10B981;
+      --button-hover: #059669;
+      --suggestions-bg: #ECFDF5;
+      --suggestions-border: #34D399;
+      --suggestions-hover: #A7F3D0;
+      --theme-button-bg: #34D399;
+      --theme-button-text: #14532D;
+      --error-text: #991B1B;
+      --modal-bg: #ECFDF5;
+      --modal-border: #34D399;
+      --success-text: #059669;
+      --quiz-button-bg: #10B981;
+      --quiz-button-hover: #059669;
+      --quiz-button-active: #047857;
+      --quiz-correct-bg: #059669;
+      --quiz-incorrect-bg: #991B1B;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-image: var(--bg-gradient);
+      background-size: 200% 200%;
+      color: var(--text-color);
+      transition: color 0.3s ease;
+      animation: gradient-shift 1s ease-in-out;
+    }
+    input::placeholder {
+      color: #9CA3AF;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    }
+    #suggestions li {
+      transition: background-color 0.2s ease, transform 0.2s ease;
+      animation-delay: calc(var(--index) * 0.1s);
+      background-color: var(--suggestions-bg);
+    }
+    #suggestions li:hover {
+      transform: scale(1.03) translateX(5px);
+      background-color: var(--suggestions-hover);
+    }
+    #countryInput {
+      background-color: var(--input-bg);
+      border-color: var(--input-border);
+      color: var(--text-color);
+    }
+    #countryInput:focus {
+      animation: glow 0.5s ease-in-out;
+    }
+    #findButton {
+      background-color: var(--button-bg);
+    }
+    #findButton:hover {
+      background-color: var(--button-hover);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+    #findButton:active {
+      transform: scale(0.95);
+    }
+    #suggestions {
+      background-color: var(--suggestions-bg);
+      border-color: var(--suggestions-border);
+    }
+    #result.error {
+      color: var(--error-text);
+      animation: shake 0.5s ease-in-out;
+    }
+    #langToggle, #themeToggle {
+      background-color: var(--bg-color);
+      color: var(--theme-button-text);
+    }
+    #langToggle:hover, #themeToggle:hover {
+      background-color: color-mix(in srgb, var(--bg-color) 80%, var(--button-hover) 20%);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+    #langToggle:active, #themeToggle:active {
+      transform: scale(0.95);
+    }
+    #langIcon {
+      display: inline-block;
+    }
+    #langToggle:hover #langIcon {
+      transform: scale(1.2);
+    }
+    #langToggle.active #langIcon {
+      animation: rotate-flag 0.4s ease-in-out;
+    }
+    #themeModal {
+      background-color: var(--modal-bg);
+      border: 1px solid var(--modal-border);
+      max-height: 80vh;
+      overflow-y: auto;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 30;
+      width: 90%;
+      max-width: 320px;
+    }
+    #themeModal.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    #modalOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 20;
+    }
+    .theme-option:hover .theme-dot {
+      transform: scale(1.2) rotate(15deg);
+    }
+    #countryInfo {
+      background-color: var(--suggestions-bg);
+      border-color: var(--suggestions-border);
+    }
+    #result img, #quizQuestion img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      image-rendering: crisp-edges;
+    }
+    #clearInput {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #clearInput:hover {
+      opacity: 1;
+      background-color: var(--suggestions-hover);
+    }
+    #clearInput.active {
+      animation: clear-pulse 0.3s ease-in-out;
+    }
+    #clearInput.hidden {
+      display: none;
+    }
+    .flag-spinner {
+      display: none;
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--text-color);
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    .flag-spinner.active {
+      display: inline-block;
+    }
+    .tab {
+      background-color: var(--theme-button-bg);
+      color: var(--theme-button-text);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    .tab:hover {
+      background-color: var(--button-hover);
+      color: white;
+    }
+    .tab.active {
+      background-color: var(--button-bg);
+      color: white;
+      animation: pulse 0.3s ease-out;
+    }
+    .quiz-option {
+      background-color: var(--quiz-button-bg);
+      color: white;
+      padding: 0.75rem;
+      border-radius: 8px;
+      width: 100%;
+      text-align: center;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    .quiz-option:hover {
+      background-color: var(--quiz-button-hover);
+      transform: scale(1.03);
+    }
+    .quiz-option:active {
+      background-color: var(--quiz-button-active);
+      transform: scale(0.95);
+    }
+    .quiz-option.correct {
+      background-color: var(--quiz-correct-bg);
+      color: white;
+    }
+    .quiz-option.incorrect {
+      background-color: var(--quiz-incorrect-bg);
+      color: white;
+    }
+    #nextQuestion, #resetQuiz {
+      background-color: var(--button-bg);
+      color: white;
+    }
+    #nextQuestion:hover, #resetQuiz:hover {
+      background-color: var(--button-hover);
+    }
+    #nextQuestion:active, #resetQuiz:active {
+      transform: scale(0.95);
+    }
+    #quizScore {
+      animation: slide-in 0.4s ease-out;
+    }
+    #quizOptions.fade-out {
+      animation: fade-out 0.3s ease-out forwards;
+    }
+    #authorLink {
+      background-color: var(--theme-button-bg);
+      color: var(--theme-button-text);
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      text-decoration: none;
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+    }
+    #authorLink:hover {
+      background-color: var(--button-hover);
+      color: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      transform: scale(1.05);
+    }
+    #authorLink:active {
+      transform: scale(0.95);
+    }
+    @keyframes glow {
+      0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+      50% { box-shadow: 0 0 15px 2px rgba(59, 130, 246, 0.5); }
+      100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+  <div class="w-full max-w-sm p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h1 id="header" class="text-3xl font-semibold animate-pulse">Столицы стран</h1>
+      <div class="flex gap-2 items-center">
+        <button id="langToggle" class="p-2 rounded-full transition transform duration-200" aria-label="Переключить язык">
+          <span id="langIcon">🇷🇺</span>
+        </button>
+        <button id="themeToggle" class="p-2 rounded-full transition transform duration-200" aria-label="Выбрать тему">
+          <span>🎨</span>
+        </button>
+      </div>
+    </div>
+    <nav class="flex gap-2 mb-4">
+      <button id="tabSearch" class="tab active">Поиск</button>
+      <button id="tabQuiz" class="tab">Викторина</button>
+    </nav>
+    <div id="searchContainer">
+      <div class="relative">
+        <input
+          type="text"
+          id="countryInput"
+          placeholder="Введите страну"
+          class="w-full p-3 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition transform duration-200 animate-slide-up"
+        >
+        <button id="clearInput" class="hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </button>
+        <ul id="suggestions" class="absolute w-full rounded-lg mt-2 max-h-48 overflow-y-auto shadow-lg hidden z-10"></ul>
+      </div>
+      <button
+        onclick="findCapital()"
+        id="findButton"
+        class="mt-4 w-full text-white p-3 rounded-lg hover:shadow-lg transition transform duration-200 font-medium animate-slide-up"
+      >
+        Найти столицу
+      </button>
+      <div id="result" class="mt-6 text-center text-lg flex items-center justify-center gap-2"></div>
+      <div id="countryInfo" class="mt-4 p-4 rounded-lg shadow-sm hidden animate-slide-in"></div>
+    </div>
+    <div id="quizContainer" class="hidden">
+      <div id="quizScore" class="text-center text-lg mb-4"></div>
+      <div id="quizQuestion" class="text-center text-lg flex items-center justify-center gap-2 mb-4"></div>
+      <div id="quizOptions" class="grid gap-2"></div>
+      <div class="flex gap-2 mt-4">
+        <button id="nextQuestion" class="w-full text-white p-3 rounded-lg hover:shadow-lg transition transform duration-200 font-medium hidden">
+          Следующий вопрос
+        </button>
+        <button id="resetQuiz" class="w-full text-white p-3 rounded-lg hover:shadow-lg transition transform duration-200 font-medium">
+          Начать заново
+        </button>
+      </div>
+    </div>
+    <div id="themeModal" class="p-4 rounded-lg shadow-lg hidden animate-modal-fade-in">
+      <div class="flex justify-between items-center mb-4">
+        <h2 id="modalTitle" class="text-lg font-medium">Выберите тему</h2>
+        <button id="closeModal" class="text-gray-500 hover:text-gray-700">&times;</button>
+      </div>
+      <ul id="themeList" class="space-y-2"></ul>
+    </div>
+    <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-30 hidden"></div>
+    <a id="authorLink" href="https://t.me/username" target="_blank" class="animate-slide-up">
+      <span id="authorText">Автор</span>
+    </a>
+  </div>
+
+  <script>
+    // массив стран
+    const countries = {
+      "Абхазия": { capital: "Сухум", code: "ab", en: "Abkhazia", enCapital: "Sukhumi", region: "Азия", population: "100,000", language: "Абхазский, Русский" },
+      "Австралия": { capital: "Канберра", code: "au", en: "Australia", enCapital: "Canberra", region: "Океания", population: "400,000", language: "Английский" },
+      "Австрия": { capital: "Вена", code: "at", en: "Austria", enCapital: "Vienna", region: "Европа", population: "1,900,000", language: "Немецкий" },
+      "Азербайджан": { capital: "Баку", code: "az", en: "Azerbaijan", enCapital: "Baku", region: "Азия", population: "2,200,000", language: "Азербайджанский" },
+      "Албания": { capital: "Тирана", code: "al", en: "Albania", enCapital: "Tirana", region: "Европа", population: "500,000", language: "Албанский" },
+      "Алжир": { capital: "Алжир", code: "dz", en: "Algeria", enCapital: "Algiers", region: "Африка", population: "2,700,000", language: "Арабский" },
+      "Ангола": { capital: "Луанда", code: "ao", en: "Angola", enCapital: "Luanda", region: "Африка", population: "8,000,000", language: "Португальский" },
+      "Андорра": { capital: "Андорра-ла-Велья", code: "ad", en: "Andorra", enCapital: "Andorra la Vella", region: "Европа", population: "22,000", language: "Каталанский" },
+      "Антигуа и Барбуда": { capital: "Сент-Джонс", code: "ag", en: "Antigua and Barbuda", enCapital: "Saint John's", region: "Америка", population: "30,000", language: "Английский" },
+      "Аргентина": { capital: "Буэнос-Айрес", code: "ar", en: "Argentina", enCapital: "Buenos Aires", region: "Америка", population: "15,000,000", language: "Испанский" },
+      "Армения": { capital: "Ереван", code: "am", en: "Armenia", enCapital: "Yerevan", region: "Азия", population: "1,100,000", language: "Армянский" },
+      "Афганистан": { capital: "Кабул", code: "af", en: "Afghanistan", enCapital: "Kabul", region: "Азия", population: "4,000,000", language: "Пушту, Дари" },
+      "Багамы": { capital: "Нассау", code: "bs", en: "Bahamas", enCapital: "Nassau", region: "Америка", population: "280,000", language: "Английский" },
+      "Бангладеш": { capital: "Дакка", code: "bd", en: "Bangladesh", enCapital: "Dhaka", region: "Азия", population: "20,000,000", language: "Бенгальский" },
+      "Барбадос": { capital: "Бриджтаун", code: "bb", en: "Barbados", enCapital: "Bridgetown", region: "Америка", population: "110,000", language: "Английский" },
+      "Бахрейн": { capital: "Манама", code: "bh", en: "Bahrain", enCapital: "Manama", region: "Азия", population: "200,000", language: "Арабский" },
+      "Беларусь": { capital: "Минск", code: "by", en: "Belarus", enCapital: "Minsk", region: "Европа", population: "1,900,000", language: "Белорусский, Русский" },
+      "Белиз": { capital: "Бельмопан", code: "bz", en: "Belize", enCapital: "Belmopan", region: "Америка", population: "23,000", language: "Английский" },
+      "Бельгия": { capital: "Брюссель", code: "be", en: "Belgium", enCapital: "Brussels", region: "Европа", population: "1,200,000", language: "Нидерландский, Французский" },
+      "Бенин": { capital: "Порто-Ново", code: "bj", en: "Benin", enCapital: "Porto-Novo", region: "Африка", population: "260,000", language: "Французский" },
+      "Болгария": { capital: "София", code: "bg", en: "Bulgaria", enCapital: "Sofia", region: "Европа", population: "1,200,000", language: "Болгарский" },
+      "Боливия": { capital: "Сукре", code: "bo", en: "Bolivia", enCapital: "Sucre", region: "Америка", population: "300,000", language: "Испанский" },
+      "Босния и Герцеговина": { capital: "Сараево", code: "ba", en: "Bosnia and Herzegovina", enCapital: "Sarajevo", region: "Европа", population: "400,000", language: "Боснийский" },
+      "Ботсвана": { capital: "Габороне", code: "bw", en: "Botswana", enCapital: "Gaborone", region: "Африка", population: "230,000", language: "Английский, Тсвана" },
+      "Бразилия": { capital: "Бразилиа", code: "br", en: "Brazil", enCapital: "Brasília", region: "Америка", population: "3,000,000", language: "Португальский" },
+      "Бруней": { capital: "Бандар-Сери-Бегаван", code: "bn", en: "Brunei", enCapital: "Bandar Seri Begawan", region: "Азия", population: "100,000", language: "Малайский" },
+      "Буркина-Фасо": { capital: "Уагадугу", code: "bf", en: "Burkina Faso", enCapital: "Ouagadougou", region: "Африка", population: "2,200,000", language: "Французский" },
+      "Бурунди": { capital: "Гитега", code: "bi", en: "Burundi", enCapital: "Gitega", region: "Африка", population: "120,000", language: "Кирунди, Французский" },
+      "Бутан": { capital: "Тхимпху", code: "bt", en: "Bhutan", enCapital: "Thimphu", region: "Азия", population: "115,000", language: "Дзонг-кэ" },
+      "Вануату": { capital: "Порт-Вила", code: "vu", en: "Vanuatu", enCapital: "Port Vila", region: "Океания", population: "50,000", language: "Бислама, Английский" },
+      "Ватикан": { capital: "Ватикан", code: "va", en: "Vatican City", enCapital: "Vatican City", region: "Европа", population: "800", language: "Итальянский" },
+      "Великобритания": { capital: "Лондон", code: "gb", en: "United Kingdom", enCapital: "London", region: "Европа", population: "9,000,000", language: "Английский" },
+      "Венгрия": { capital: "Будапешт", code: "hu", en: "Hungary", enCapital: "Budapest", region: "Европа", population: "1,700,000", language: "Венгерский" },
+      "Венесуэла": { capital: "Каракас", code: "ve", en: "Venezuela", enCapital: "Caracas", region: "Америка", population: "2,900,000", language: "Испанский" },
+      "Восточный Тимор": { capital: "Дили", code: "tl", en: "East Timor", enCapital: "Dili", region: "Азия", population: "200,000", language: "Тетум, Португальский" },
+      "Вьетнам": { capital: "Ханой", code: "vn", en: "Vietnam", enCapital: "Hanoi", region: "Азия", population: "8,000,000", language: "Вьетнамский" },
+      "Габон": { capital: "Либревиль", code: "ga", en: "Gabon", enCapital: "Libreville", region: "Африка", population: "700,000", language: "Французский" },
+      "Гаити": { capital: "Порт-о-Пренс", code: "ht", en: "Haiti", enCapital: "Port-au-Prince", region: "Америка", population: "1,200,000", language: "Креольский, Французский" },
+      "Гайана": { capital: "Джорджтаун", code: "gy", en: "Guyana", enCapital: "Georgetown", region: "Америка", population: "200,000", language: "Английский" },
+      "Гамбия": { capital: "Банжул", code: "gm", en: "Gambia", enCapital: "Banjul", region: "Африка", population: "80,000", language: "Английский" },
+      "Гана": { capital: "Аккра", code: "gh", en: "Ghana", enCapital: "Accra", region: "Африка", population: "2,500,000", language: "Английский" },
+      "Гватемала": { capital: "Гватемала", code: "gt", en: "Guatemala", enCapital: "Guatemala City", region: "Америка", population: "1,000,000", language: "Испанский" },
+      "Гвинея": { capital: "Конакри", code: "gn", en: "Guinea", enCapital: "Conakry", region: "Африка", population: "2,000,000", language: "Французский" },
+      "Гвинея-Бисау": { capital: "Бисау", code: "gw", en: "Guinea-Bissau", enCapital: "Bissau", region: "Африка", population: "400,000", language: "Португальский" },
+      "Германия": { capital: "Берлин", code: "de", en: "Germany", enCapital: "Berlin", region: "Европа", population: "3,700,000", language: "Немецкий" },
+      "Гондурас": { capital: "Тегусигальпа", code: "hn", en: "Honduras", enCapital: "Tegucigalpa", region: "Америка", population: "1,100,000", language: "Испанский" },
+      "Гренада": { capital: "Сент-Джорджес", code: "gd", en: "Grenada", enCapital: "St. George's", region: "Америка", population: "40,000", language: "Английский" },
+      "Греция": { capital: "Афины", code: "gr", en: "Greece", enCapital: "Athens", region: "Европа", population: "3,200,000", language: "Греческий" },
+      "Грузия": { capital: "Тбилиси", code: "ge", en: "Georgia", enCapital: "Tbilisi", region: "Азия", population: "1,200,000", language: "Грузинский" },
+      "Дания": { capital: "Копенгаген", code: "dk", en: "Denmark", enCapital: "Copenhagen", region: "Европа", population: "600,000", language: "Датский" },
+      "Джибути": { capital: "Джибути", code: "dj", en: "Djibouti", enCapital: "Djibouti", region: "Африка", population: "600,000", language: "Французский, Арабский" },
+      "Доминика": { capital: "Розо", code: "dm", en: "Dominica", enCapital: "Roseau", region: "Америка", population: "15,000", language: "Английский" },
+      "Доминиканская Республика": { capital: "Санто-Доминго", code: "do", en: "Dominican Republic", enCapital: "Santo Domingo", region: "Америка", population: "3,400,000", language: "Испанский" },
+      "ДР Конго": { capital: "Киншаса", code: "cd", en: "DR Congo", enCapital: "Kinshasa", region: "Африка", population: "15,000,000", language: "Французский" },
+      "Египет": { capital: "Каир", code: "eg", en: "Egypt", enCapital: "Cairo", region: "Африка", population: "20,000,000", language: "Арабский" },
+      "Замбия": { capital: "Лусака", code: "zm", en: "Zambia", enCapital: "Lusaka", region: "Африка", population: "1,800,000", language: "Английский" },
+      "Зимбабве": { capital: "Хараре", code: "zw", en: "Zimbabwe", enCapital: "Harare", region: "Африка", population: "1,500,000", language: "Английский" },
+      "Израиль": { capital: "Иерусалим", code: "il", en: "Israel", enCapital: "Jerusalem", region: "Азия", population: "900,000", language: "Иврит" },
+      "Индия": { capital: "Нью-Дели", code: "in", en: "India", enCapital: "New Delhi", region: "Азия", population: "31,000,000", language: "Хинди, Английский" },
+      "Индонезия": { capital: "Джакарта", code: "id", en: "Indonesia", enCapital: "Jakarta", region: "Азия", population: "10,500,000", language: "Индонезийский" },
+      "Иордания": { capital: "Амман", code: "jo", en: "Jordan", enCapital: "Amman", region: "Азия", population: "4,000,000", language: "Арабский" },
+      "Ирак": { capital: "Багдад", code: "iq", en: "Iraq", enCapital: "Baghdad", region: "Азия", population: "7,000,000", language: "Арабский" },
+      "Иран": { capital: "Тегеран", code: "ir", en: "Iran", enCapital: "Tehran", region: "Азия", population: "9,000,000", language: "Персидский" },
+      "Ирландия": { capital: "Дублин", code: "ie", en: "Ireland", enCapital: "Dublin", region: "Европа", population: "550,000", language: "Английский, Ирландский" },
+      "Исландия": { capital: "Рейкьявик", code: "is", en: "Iceland", enCapital: "Reykjavik", region: "Европа", population: "130,000", language: "Исландский" },
+      "Испания": { capital: "Мадрид", code: "es", en: "Spain", enCapital: "Madrid", region: "Европа", population: "3,300,000", language: "Испанский" },
+      "Италия": { capital: "Рим", code: "it", en: "Italy", enCapital: "Rome", region: "Европа", population: "2,800,000", language: "Итальянский" },
+      "Йемен": { capital: "Сана", code: "ye", en: "Yemen", enCapital: "Sana'a", region: "Азия", population: "3,000,000", language: "Арабский" },
+      "Кабо-Верде": { capital: "Прая", code: "cv", en: "Cape Verde", enCapital: "Praia", region: "Африка", population: "160,000", language: "Португальский" },
+      "Казахстан": { capital: "Астана", code: "kz", en: "Kazakhstan", enCapital: "Astana", region: "Азия", population: "1,200,000", language: "Казахский, Русский" },
+      "Камбоджа": { capital: "Пномпень", code: "kh", en: "Cambodia", enCapital: "Phnom Penh", region: "Азия", population: "2,000,000", language: "Кхмерский" },
+      "Камерун": { capital: "Яунде", code: "cm", en: "Cameroon", enCapital: "Yaoundé", region: "Африка", population: "2,800,000", language: "Французский, Английский" },
+      "Канада": { capital: "Оттава", code: "ca", en: "Canada", enCapital: "Ottawa", region: "Америка", population: "1,000,000", language: "Английский, Французский" },
+      "Катар": { capital: "Доха", code: "qa", en: "Qatar", enCapital: "Doha", region: "Азия", population: "2,400,000", language: "Арабский" },
+      "Кения": { capital: "Найроби", code: "ke", en: "Kenya", enCapital: "Nairobi", region: "Африка", population: "4,700,000", language: "Суахили, Английский" },
+      "Кипр": { capital: "Никосия", code: "cy", en: "Cyprus", enCapital: "Nicosia", region: "Европа", population: "330,000", language: "Греческий, Турецкий" },
+      "Киргизия": { capital: "Бишкек", code: "kg", en: "Kyrgyzstan", enCapital: "Bishkek", region: "Азия", population: "1,000,000", language: "Киргизский, Русский" },
+      "Кирибати": { capital: "Южная Тарава", code: "ki", en: "Kiribati", enCapital: "South Tarawa", region: "Океания", population: "60,000", language: "Английский" },
+      "Китай": { capital: "Пекин", code: "cn", en: "China", enCapital: "Beijing", region: "Азия", population: "21,000,000", language: "Китайский" },
+      "КНДР": { capital: "Пхеньян", code: "kp", en: "North Korea", enCapital: "Pyongyang", region: "Азия", population: "3,200,000", language: "Корейский" },
+      "Колумбия": { capital: "Богота", code: "co", en: "Colombia", enCapital: "Bogotá", region: "Америка", population: "7,400,000", language: "Испанский" },
+      "Коморы": { capital: "Морони", code: "km", en: "Comoros", enCapital: "Moroni", region: "Африка", population: "80,000", language: "Коморский, Французский" },
+      "Коста-Рика": { capital: "Сан-Хосе", code: "cr", en: "Costa Rica", enCapital: "San José", region: "Америка", population: "340,000", language: "Испанский" },
+      "Кот-д’Ивуар": { capital: "Ямусукро", code: "ci", en: "Côte d'Ivoire", enCapital: "Yamoussoukro", region: "Африка", population: "250,000", language: "Французский" },
+      "Куба": { capital: "Гавана", code: "cu", en: "Cuba", enCapital: "Havana", region: "Америка", population: "2,100,000", language: "Испанский" },
+      "Кувейт": { capital: "Эль-Кувейт", code: "kw", en: "Kuwait", enCapital: "Kuwait City", region: "Азия", population: "3,000,000", language: "Арабский" },
+      "Лаос": { capital: "Вьентьян", code: "la", en: "Laos", enCapital: "Vientiane", region: "Азия", population: "800,000", language: "Лаосский" },
+      "Латвия": { capital: "Рига", code: "lv", en: "Latvia", enCapital: "Riga", region: "Европа", population: "600,000", language: "Латышский" },
+      "Лесото": { capital: "Масеру", code: "ls", en: "Lesotho", enCapital: "Maseru", region: "Африка", population: "200,000", language: "Сесото, Английский" },
+      "Либерия": { capital: "Монровия", code: "lr", en: "Liberia", enCapital: "Monrovia", region: "Африка", population: "1,500,000", language: "Английский" },
+      "Ливан": { capital: "Бейрут", code: "lb", en: "Lebanon", enCapital: "Beirut", region: "Азия", population: "2,400,000", language: "Арабский" },
+      "Ливия": { capital: "Триполи", code: "ly", en: "Libya", enCapital: "Tripoli", region: "Африка", population: "1,200,000", language: "Арабский" },
+      "Литва": { capital: "Вильнюс", code: "lt", en: "Lithuania", enCapital: "Vilnius", region: "Европа", population: "550,000", language: "Литовский" },
+      "Лихтенштейн": { capital: "Вадуц", code: "li", en: "Liechtenstein", enCapital: "Vaduz", region: "Европа", population: "5,500", language: "Немецкий" },
+      "Люксембург": { capital: "Люксембург", code: "lu", en: "Luxembourg", enCapital: "Luxembourg", region: "Европа", population: "125,000", language: "Люксембургский, Французский" },
+      "Маврикий": { capital: "Порт-Луи", code: "mu", en: "Mauritius", enCapital: "Port Louis", region: "Африка", population: "150,000", language: "Английский" },
+      "Мавритания": { capital: "Нуакшот", code: "mr", en: "Mauritania", enCapital: "Nouakchott", region: "Африка", population: "1,200,000", language: "Арабский" },
+      "Мадагаскар": { capital: "Антананариву", code: "mg", en: "Madagascar", enCapital: "Antananarivo", region: "Африка", population: "1,400,000", language: "Малагасийский, Французский" },
+      "Малави": { capital: "Лилонгве", code: "mw", en: "Malawi", enCapital: "Lilongwe", region: "Африка", population: "1,200,000", language: "Английский" },
+      "Малайзия": { capital: "Куала-Лумпур", code: "my", en: "Malaysia", enCapital: "Kuala Lumpur", region: "Азия", population: "1,800,000", language: "Малайский" },
+      "Мали": { capital: "Бамако", code: "ml", en: "Mali", enCapital: "Bamako", region: "Африка", population: "2,600,000", language: "Французский" },
+      "Мальдивы": { capital: "Мале", code: "mv", en: "Maldives", enCapital: "Malé", region: "Азия", population: "200,000", language: "Дивехи" },
+      "Мальта": { capital: "Валлетта", code: "mt", en: "Malta", enCapital: "Valletta", region: "Европа", population: "7,000", language: "Мальтийский, Английский" },
+      "Марокко": { capital: "Рабат", code: "ma", en: "Morocco", enCapital: "Rabat", region: "Африка", population: "600,000", language: "Арабский, Берберский" },
+      "Маршалловы Острова": { capital: "Маджуро", code: "mh", en: "Marshall Islands", enCapital: "Majuro", region: "Океания", population: "30,000", language: "Маршалльский, Английский" },
+      "Мексика": { capital: "Мехико", code: "mx", en: "Mexico", enCapital: "Mexico City", region: "Америка", population: "9,200,000", language: "Испанский" },
+      "Микронезия": { capital: "Паликир", code: "fm", en: "Micronesia", enCapital: "Palikir", region: "Океания", population: "7,000", language: "Английский" },
+      "Мозамбик": { capital: "Мапуту", code: "mz", en: "Mozambique", enCapital: "Maputo", region: "Африка", population: "1,200,000", language: "Португальский" },
+      "Молдова": { capital: "Кишинёв", code: "md", en: "Moldova", enCapital: "Chișinău", region: "Европа", population: "500,000", language: "Молдавский" },
+      "Монако": { capital: "Монако", code: "mc", en: "Monaco", enCapital: "Monaco", region: "Европа", population: "39,000", language: "Французский" },
+      "Монголия": { capital: "Улан-Батор", code: "mn", en: "Mongolia", enCapital: "Ulaanbaatar", region: "Азия", population: "1,500,000", language: "Монгольский" },
+      "Мьянма": { capital: "Нейпьидо", code: "mm", en: "Myanmar", enCapital: "Naypyidaw", region: "Азия", population: "1,000,000", language: "Бирманский" },
+      "Намибия": { capital: "Виндхук", code: "na", en: "Namibia", enCapital: "Windhoek", region: "Африка", population: "400,000", language: "Английский" },
+      "Науру": { capital: "Ярен", code: "nr", en: "Nauru", enCapital: "Yaren", region: "Океания", population: "10,000", language: "Науруанский, Английский" },
+      "Непал": { capital: "Катманду", code: "np", en: "Nepal", enCapital: "Kathmandu", region: "Азия", population: "1,500,000", language: "Непальский" },
+      "Нигер": { capital: "Ниамей", code: "ne", en: "Niger", enCapital: "Niamey", region: "Африка", population: "1,300,000", language: "Французский" },
+      "Нигерия": { capital: "Абуджа", code: "ng", en: "Nigeria", enCapital: "Abuja", region: "Африка", population: "1,400,000", language: "Английский" },
+      "Нидерланды": { capital: "Амстердам", code: "nl", en: "Netherlands", enCapital: "Amsterdam", region: "Европа", population: "900,000", language: "Нидерландский" },
+      "Никарагуа": { capital: "Манагуа", code: "ni", en: "Nicaragua", enCapital: "Managua", region: "Америка", population: "1,000,000", language: "Испанский" },
+      "Новая Зеландия": { capital: "Веллингтон", code: "nz", en: "New Zealand", enCapital: "Wellington", region: "Океания", population: "400,000", language: "Английский" },
+      "Норвегия": { capital: "Осло", code: "no", en: "Norway", enCapital: "Oslo", region: "Европа", population: "700,000", language: "Норвежский" },
+      "ОАЭ": { capital: "Абу-Даби", code: "ae", en: "United Arab Emirates", enCapital: "Abu Dhabi", region: "Азия", population: "1,500,000", language: "Арабский" },
+      "Оман": { capital: "Маскат", code: "om", en: "Oman", enCapital: "Muscat", region: "Азия", population: "1,300,000", language: "Арабский" },
+      "Пакистан": { capital: "Исламабад", code: "pk", en: "Pakistan", enCapital: "Islamabad", region: "Азия", population: "1,200,000", language: "Урду, Английский" },
+      "Палау": { capital: "Нгерулмуд", code: "pw", en: "Palau", enCapital: "Ngerulmud", region: "Океания", population: "400", language: "Палауский, Английский" },
+      "Панама": { capital: "Панама", code: "pa", en: "Panama", enCapital: "Panama City", region: "Америка", population: "1,500,000", language: "Испанский" },
+      "Папуа — Новая Гвинея": { capital: "Порт-Морсби", code: "pg", en: "Papua New Guinea", enCapital: "Port Moresby", region: "Океания", population: "400,000", language: "Английский" },
+      "Парагвай": { capital: "Асунсьон", code: "py", en: "Paraguay", enCapital: "Asunción", region: "Америка", population: "500,000", language: "Испанский, Гуарани" },
+      "Перу": { capital: "Лима", code: "pe", en: "Peru", enCapital: "Lima", region: "Америка", population: "9,700,000", language: "Испанский" },
+      "Польша": { capital: "Варшава", code: "pl", en: "Poland", enCapital: "Warsaw", region: "Европа", population: "1,800,000", language: "Польский" },
+      "Португалия": { capital: "Лиссабон", code: "pt", en: "Portugal", enCapital: "Lisbon", region: "Европа", population: "500,000", language: "Португальский" },
+      "Республика Конго": { capital: "Браззавиль", code: "cg", en: "Republic of the Congo", enCapital: "Brazzaville", region: "Африка", population: "2,300,000", language: "Французский" },
+      "Россия": { capital: "Москва", code: "ru", en: "Russia", enCapital: "Moscow", region: "Европа", population: "12,600,000", language: "Русский" },
+      "Руанда": { capital: "Кигали", code: "rw", en: "Rwanda", enCapital: "Kigali", region: "Африка", population: "1,200,000", language: "Киньяруанда, Английский" },
+      "Румыния": { capital: "Бухарест", code: "ro", en: "Romania", enCapital: "Bucharest", region: "Европа", population: "1,800,000", language: "Румынский" },
+      "Сальвадор": { capital: "Сан-Сальвадор", code: "sv", en: "El Salvador", enCapital: "San Salvador", region: "Америка", population: "570,000", language: "Испанский" },
+      "Самоа": { capital: "Апиа", code: "ws", en: "Samoa", enCapital: "Apia", region: "Океания", population: "40,000", language: "Самоанский, Английский" },
+      "Сан-Марино": { capital: "Сан-Марино", code: "sm", en: "San Marino", enCapital: "San Marino", region: "Европа", population: "4,000", language: "Итальянский" },
+      "Сан-Томе и Принсипи": { capital: "Сан-Томе", code: "st", en: "São Tomé and Príncipe", enCapital: "São Tomé", region: "Африка", population: "70,000", language: "Португальский" },
+      "Саудовская Аравия": { capital: "Эр-Рияд", code: "sa", en: "Saudi Arabia", enCapital: "Riyadh", region: "Азия", population: "7,700,000", language: "Арабский" },
+      "Северная Македония": { capital: "Скопье", code: "mk", en: "North Macedonia", enCapital: "Skopje", region: "Европа", population: "600,000", language: "Македонский" },
+      "Сейшелы": { capital: "Виктория", code: "sc", en: "Seychelles", enCapital: "Victoria", region: "Африка", population: "30,000", language: "Английский, Французский" },
+      "Сенегал": { capital: "Дакар", code: "sn", en: "Senegal", enCapital: "Dakar", region: "Африка", population: "3,900,000", language: "Французский" },
+      "Сент-Винсент и Гренадины": { capital: "Кингстаун", code: "vc", en: "Saint Vincent and the Grenadines", enCapital: "Kingstown", region: "Америка", population: "40,000", language: "Английский" },
+      "Сент-Китс и Невис": { capital: "Бастер", code: "kn", en: "Saint Kitts and Nevis", enCapital: "Basseterre", region: "Америка", population: "15,000", language: "Английский" },
+      "Сент-Люсия": { capital: "Кастри", code: "lc", en: "Saint Lucia", enCapital: "Castries", region: "Америка", population: "20,000", language: "Английский" },
+      "Сербия": { capital: "Белград", code: "rs", en: "Serbia", enCapital: "Belgrade", region: "Европа", population: "1,400,000", language: "Сербский" },
+      "Сингапур": { capital: "Сингапур", code: "sg", en: "Singapore", enCapital: "Singapore", region: "Азия", population: "5,700,000", language: "Английский, Малайский" },
+      "Сирия": { capital: "Дамаск", code: "sy", en: "Syria", enCapital: "Damascus", region: "Азия", population: "2,400,000", language: "Арабский" },
+      "Словакия": { capital: "Братислава", code: "sk", en: "Slovakia", enCapital: "Bratislava", region: "Европа", population: "430,000", language: "Словацкий" },
+      "Словения": { capital: "Любляна", code: "si", en: "Slovenia", enCapital: "Ljubljana", region: "Европа", population: "290,000", language: "Словенский" },
+      "Соломоновы Острова": { capital: "Хониара", code: "sb", en: "Solomon Islands", enCapital: "Honiara", region: "Океания", population: "80,000", language: "Английский" },
+      "Сомали": { capital: "Могадишо", code: "so", en: "Somalia", enCapital: "Mogadishu", region: "Африка", population: "2,200,000", language: "Сомалийский, Арабский" },
+      "Судан": { capital: "Хартум", code: "sd", en: "Sudan", enCapital: "Khartoum", region: "Африка", population: "5,300,000", language: "Арабский, Английский" },
+      "Суринам": { capital: "Парамарибо", code: "sr", en: "Suriname", enCapital: "Paramaribo", region: "Америка", population: "250,000", language: "Нидерландский" },
+      "США": { capital: "Вашингтон", code: "us", en: "United States", enCapital: "Washington, D.C.", region: "Америка", population: "700,000", language: "Английский" },
+      "Сьерра-Леоне": { capital: "Фритаун", code: "sl", en: "Sierra Leone", enCapital: "Freetown", region: "Африка", population: "1,200,000", language: "Английский" },
+      "Таджикистан": { capital: "Душанбе", code: "tj", en: "Tajikistan", enCapital: "Dushanbe", region: "Азия", population: "900,000", language: "Таджикский" },
+      "Таиланд": { capital: "Бангкок", code: "th", en: "Thailand", enCapital: "Bangkok", region: "Азия", population: "10,500,000", language: "Тайский" },
+      "Танзания": { capital: "Додома", code: "tz", en: "Tanzania", enCapital: "Dodoma", region: "Африка", population: "600,000", language: "Суахили, Английский" },
+      "Того": { capital: "Ломе", code: "tg", en: "Togo", enCapital: "Lomé", region: "Африка", population: "800,000", language: "Французский" },
+      "Тонга": { capital: "Нукуалофа", code: "to", en: "Tonga", enCapital: "Nukuʻalofa", region: "Океания", population: "25,000", language: "Тонганский, Английский" },
+      "Тринидад и Тобаго": { capital: "Порт-оф-Спейн", code: "tt", en: "Trinidad and Tobago", enCapital: "Port of Spain", region: "Америка", population: "50,000", language: "Английский" },
+      "Тувалу": { capital: "Фунафути", code: "tv", en: "Tuvalu", enCapital: "Funafuti", region: "Океания", population: "6,000", language: "Тувалуанский, Английский" },
+      "Тунис": { capital: "Тунис", code: "tn", en: "Tunisia", enCapital: "Tunis", region: "Африка", population: "700,000", language: "Арабский" },
+      "Туркменистан": { capital: "Ашхабад", code: "tm", en: "Turkmenistan", enCapital: "Ashgabat", region: "Азия", population: "900,000", language: "Туркменский" },
+      "Турция": { capital: "Анкара", code: "tr", en: "Turkey", enCapital: "Ankara", region: "Азия", population: "5,700,000", language: "Турецкий" },
+      "Уганда": { capital: "Кампала", code: "ug", en: "Uganda", enCapital: "Kampala", region: "Африка", population: "1,700,000", language: "Английский, Суахили" },
+      "Узбекистан": { capital: "Ташкент", code: "uz", en: "Uzbekistan", enCapital: "Tashkent", region: "Азия", population: "2,500,000", language: "Узбекский" },
+      "Украина": { capital: "Киев", code: "ua", en: "Ukraine", enCapital: "Kyiv", region: "Европа", population: "2,800,000", language: "Украинский" },
+      "Уругвай": { capital: "Монтевидео", code: "uy", en: "Uruguay", enCapital: "Montevideo", region: "Америка", population: "1,400,000", language: "Испанский" },
+      "Фиджи": { capital: "Сува", code: "fj", en: "Fiji", enCapital: "Suva", region: "Океания", population: "90,000", language: "Английский, Фиджийский" },
+      "Филиппины": { capital: "Манила", code: "ph", en: "Philippines", enCapital: "Manila", region: "Азия", population: "1,900,000", language: "Филиппинский, Английский" },
+      "Финляндия": { capital: "Хельсинки", code: "fi", en: "Finland", enCapital: "Helsinki", region: "Европа", population: "650,000", language: "Финский, Шведский" },
+      "Франция": { capital: "Париж", code: "fr", en: "France", enCapital: "Paris", region: "Европа", population: "2,200,000", language: "Французский" },
+      "Хорватия": { capital: "Загреб", code: "hr", en: "Croatia", enCapital: "Zagreb", region: "Европа", population: "800,000", language: "Хорватский" },
+      "ЦАР": { capital: "Банги", code: "cf", en: "Central African Republic", enCapital: "Bangui", region: "Африка", population: "900,000", language: "Французский, Санго" },
+      "Чад": { capital: "Нджамена", code: "td", en: "Chad", enCapital: "N'Djamena", region: "Африка", population: "1,400,000", language: "Французский, Арабский" },
+      "Черногория": { capital: "Подгорица", code: "me", en: "Montenegro", enCapital: "Podgorica", region: "Европа", population: "190,000", language: "Черногорский" },
+      "Чехия": { capital: "Прага", code: "cz", en: "Czech Republic", enCapital: "Prague", region: "Европа", population: "1,300,000", language: "Чешский" },
+      "Чили": { capital: "Сантьяго", code: "cl", en: "Chile", enCapital: "Santiago", region: "Америка", population: "5,600,000", language: "Испанский" },
+      "Швейцария": { capital: "Берн", code: "ch", en: "Switzerland", enCapital: "Bern", region: "Европа", population: "140,000", language: "Немецкий, Французский" },
+      "Швеция": { capital: "Стокгольм", code: "se", en: "Sweden", enCapital: "Stockholm", region: "Европа", population: "970,000", language: "Шведский" },
+      "Шри-Ланка": { capital: "Коломбо", code: "lk", en: "Sri Lanka", enCapital: "Colombo", region: "Азия", population: "600,000", language: "Сингальский, Тамильский" },
+      "Эквадор": { capital: "Кито", code: "ec", en: "Ecuador", enCapital: "Quito", region: "Америка", population: "2,000,000", language: "Испанский" },
+      "Экваториальная Гвинея": { capital: "Малабо", code: "gq", en: "Equatorial Guinea", enCapital: "Malabo", region: "Африка", population: "300,000", language: "Испанский, Французский" },
+      "Эритрея": { capital: "Асмэра", code: "er", en: "Eritrea", enCapital: "Asmara", region: "Африка", population: "700,000", language: "Тигринья" },
+      "Эсватини": { capital: "Мбабане", code: "sz", en: "Eswatini", enCapital: "Mbabane", region: "Африка", population: "70,000", language: "Свати, Английский" },
+      "Эстония": { capital: "Таллин", code: "ee", en: "Estonia", enCapital: "Tallinn", region: "Европа", population: "450,000", language: "Эстонский" },
+      "Эфиопия": { capital: "Аддис-Абеба", code: "et", en: "Ethiopia", enCapital: "Addis Ababa", region: "Африка", population: "3,700,000", language: "Амхарский" },
+      "ЮАР": { capital: "Претория", code: "za", en: "South Africa", enCapital: "Pretoria", region: "Африка", population: "750,000", language: "Английский, Африкаанс" },
+      "Южная Корея": { capital: "Сеул", code: "kr", en: "South Korea", enCapital: "Seoul", region: "Азия", population: "9,700,000", language: "Корейский" },
+      "Южный Судан": { capital: "Джуба", code: "ss", en: "South Sudan", enCapital: "Juba", region: "Африка", population: "400,000", language: "Английский" },
+      "Ямайка": { capital: "Кингстон", code: "jm", en: "Jamaica", enCapital: "Kingston", region: "Америка", population: "700,000", language: "Английский" },
+      "Япония": { capital: "Токио", code: "jp", en: "Japan", enCapital: "Tokyo", region: "Азия", population: "14,000,000", language: "Японский" }
+    };
+
+    // Инициализация счётчика
+    let correctAnswers = parseInt(localStorage.getItem('correctAnswers')) || 0;
+    let incorrectAnswers = parseInt(localStorage.getItem('incorrectAnswers')) || 0;
+
+    // Функция для автодополнения
+    function showSuggestions(input) {
+      const suggestions = document.getElementById('suggestions');
+      suggestions.innerHTML = '';
+      suggestions.classList.add('hidden');
+      if (input.length < 2) return;
+
+      const lang = localStorage.getItem('language') || 'ru';
+      const matches = Object.keys(countries)
+        .filter(country => 
+          (lang === 'ru' ? country : countries[country].en)
+            .toLowerCase()
+            .includes(input.toLowerCase())
+        )
+        .slice(0, 5);
+
+      if (matches.length > 0) {
+        suggestions.classList.remove('hidden');
+        matches.forEach((country, index) => {
+          const li = document.createElement('li');
+          li.textContent = lang === 'ru' ? country : countries[country].en;
+          li.className = 'p-2 cursor-pointer animate-wave-in';
+          li.style.setProperty('--index', index);
+          li.addEventListener('click', () => {
+            document.getElementById('countryInput').value = li.textContent;
+            suggestions.classList.add('hidden');
+            findCapital();
+          });
+          suggestions.appendChild(li);
+        });
+      }
+    }
+
+    // Функция для показа/скрытия кнопки очистки
+    function toggleClearButton() {
+      const input = document.getElementById('countryInput');
+      const clearButton = document.getElementById('clearInput');
+      clearButton.classList.toggle('hidden', input.value.trim() === '');
+    }
+
+    // Функция поиска столицы
+    function findCapital() {
+      const input = document.getElementById('countryInput').value.trim();
+      const lang = localStorage.getItem('language') || 'ru';
+      const result = document.getElementById('result');
+      const countryInfo = document.getElementById('countryInfo');
+      const suggestions = document.getElementById('suggestions');
+
+      suggestions.classList.add('hidden');
+      result.innerHTML = '';
+      countryInfo.innerHTML = '';
+      result.classList.remove('error', 'animate-flip-in', 'animate-shake');
+      countryInfo.classList.add('hidden');
+
+      const countryKey = Object.keys(countries).find(
+        key => 
+          key.toLowerCase() === input.toLowerCase() || 
+          countries[key].en.toLowerCase() === input.toLowerCase()
+      );
+
+      if (countryKey) {
+        const country = countries[countryKey];
+        const flag = `https://flagcdn.com/96x72/${country.code}.png`;
+        const capital = lang === 'ru' ? country.capital : country.enCapital;
+        const img = document.createElement('img');
+        img.src = flag;
+        img.alt = `Flag of ${country.en}`;
+        img.className = 'w-6 h-6';
+        const spinner = document.createElement('span');
+        spinner.className = 'flag-spinner active';
+        result.appendChild(spinner);
+        img.onload = () => {
+          spinner.remove();
+          result.classList.add('animate-flip-in');
+        };
+        img.onerror = () => {
+          spinner.remove();
+          result.innerHTML = `<span>${lang === 'ru' ? 'Ошибка загрузки флага' : 'Flag loading error'}</span>`;
+          result.classList.add('error', 'animate-shake');
+        };
+        result.innerHTML = `<span>${lang === 'ru' ? 'Столица' : 'Capital'}: ${capital}</span>`;
+        result.insertBefore(img, result.firstChild);
+
+        countryInfo.innerHTML = `
+          <p><strong>${lang === 'ru' ? 'Регион' : 'Region'}:</strong> ${country.region}</p>
+          <p><strong>${lang === 'ru' ? 'Население столицы' : 'Capital Population'}:</strong> ${country.population}</p>
+          <p><strong>${lang === 'ru' ? 'Язык' : 'Language'}:</strong> ${country.language}</p>
+        `;
+        countryInfo.classList.remove('hidden');
+        countryInfo.classList.add('animate-slide-in');
+      } else {
+        result.textContent = lang === 'ru' ? 'Страна не найдена' : 'Country not found';
+        result.classList.add('error', 'animate-shake');
+      }
+      toggleClearButton();
+    }
+
+    // Функция для обновления счётчика
+    function updateScore() {
+      const lang = localStorage.getItem('language') || 'ru';
+      const quizScore = document.getElementById('quizScore');
+      quizScore.textContent = lang === 'ru' 
+        ? `Правильных: ${correctAnswers}, Неправильных: ${incorrectAnswers}`
+        : `Correct: ${correctAnswers}, Incorrect: ${incorrectAnswers}`;
+      quizScore.classList.remove('pulse-grow');
+      void quizScore.offsetWidth; // Trigger reflow
+      quizScore.classList.add('pulse-grow');
+    }
+
+    // Функция для переключения вкладок
+    function showTab(tab) {
+      const searchContainer = document.getElementById('searchContainer');
+      const quizContainer = document.getElementById('quizContainer');
+      const tabSearch = document.getElementById('tabSearch');
+      const tabQuiz = document.getElementById('tabQuiz');
+
+      tabSearch.classList.remove('active');
+      tabQuiz.classList.remove('active');
+      searchContainer.classList.add('hidden');
+      quizContainer.classList.add('hidden');
+
+      if (tab === 'search') {
+        tabSearch.classList.add('active');
+        searchContainer.classList.remove('hidden');
+      } else if (tab === 'quiz') {
+        tabQuiz.classList.add('active');
+        quizContainer.classList.remove('hidden');
+        startQuiz();
+      }
+    }
+
+    // Функция для запуска викторины
+    function startQuiz() {
+      const lang = localStorage.getItem('language') || 'ru';
+      const quizQuestion = document.getElementById('quizQuestion');
+      const quizOptions = document.getElementById('quizOptions');
+      const nextQuestion = document.getElementById('nextQuestion');
+      
+      quizOptions.innerHTML = '';
+      quizOptions.classList.remove('fade-out');
+      nextQuestion.classList.add('hidden');
+      updateScore();
+
+      const countryKeys = Object.keys(countries);
+      if (countryKeys.length < 2) {
+        quizQuestion.innerHTML = `<span>${lang === 'ru' ? 'Недостаточно стран для викторины' : 'Not enough countries for quiz'}</span>`;
+        return;
+      }
+
+      const randomCountry = countryKeys[Math.floor(Math.random() * countryKeys.length)];
+      const country = countries[randomCountry];
+      const flag = `https://flagcdn.com/96x72/${country.code}.png`;
+      const correctCapital = lang === 'ru' ? country.capital : country.enCapital;
+
+      const img = document.createElement('img');
+      img.src = flag;
+      img.alt = `Flag of ${country.en}`;
+      img.className = 'w-6 h-6';
+      const spinner = document.createElement('span');
+      spinner.className = 'flag-spinner active';
+      quizQuestion.innerHTML = `<span>${lang === 'ru' ? 'Назови столицу' : 'Name the capital'}: ${lang === 'ru' ? randomCountry : country.en}</span>`;
+      quizQuestion.insertBefore(spinner, quizQuestion.firstChild);
+      img.onload = () => {
+        spinner.remove();
+        quizQuestion.classList.add('animate-flip-in');
+      };
+      img.onerror = () => {
+        spinner.remove();
+        quizQuestion.innerHTML = `<span>${lang === 'ru' ? 'Ошибка загрузки флага' : 'Flag loading error'}</span>`;
+        quizQuestion.classList.add('error', 'animate-shake');
+      };
+      quizQuestion.insertBefore(img, quizQuestion.firstChild);
+
+      const allCapitals = countryKeys.map(key => lang === 'ru' ? countries[key].capital : countries[key].enCapital);
+      const wrongCapitals = allCapitals
+        .filter(capital => capital !== correctCapital)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 1);
+      const options = [correctCapital, ...wrongCapitals].sort(() => Math.random() - 0.5);
+
+      options.forEach(option => {
+        const button = document.createElement('button');
+        button.textContent = option;
+        button.className = 'quiz-option';
+        button.addEventListener('click', () => checkAnswer(option, correctCapital));
+        quizOptions.appendChild(button);
+      });
+    }
+
+    // Функция для проверки ответа
+    function checkAnswer(selected, correct) {
+      const quizOptions = document.getElementById('quizOptions');
+      const nextQuestion = document.getElementById('nextQuestion');
+
+      quizOptions.querySelectorAll('button').forEach(btn => {
+        btn.disabled = true;
+        if (btn.textContent === selected) {
+          btn.classList.add('bounce');
+          setTimeout(() => btn.classList.remove('bounce'), 400);
+        }
+        if (btn.textContent === correct) {
+          btn.classList.add('correct');
+        }
+        if (btn.textContent === selected && selected !== correct) {
+          btn.classList.add('incorrect');
+        }
+      });
+
+      if (selected === correct) {
+        correctAnswers++;
+      } else {
+        incorrectAnswers++;
+      }
+      localStorage.setItem('correctAnswers', correctAnswers);
+      localStorage.setItem('incorrectAnswers', incorrectAnswers);
+      updateScore();
+
+      quizOptions.classList.add('fade-out');
+      setTimeout(() => {
+        nextQuestion.classList.remove('hidden');
+      }, 300);
+    }
+
+    // Функция для сброса викторины
+    function resetQuiz() {
+      correctAnswers = 0;
+      incorrectAnswers = 0;
+      localStorage.setItem('correctAnswers', correctAnswers);
+      localStorage.setItem('incorrectAnswers', incorrectAnswers);
+      startQuiz();
+    }
+
+    // Функция переключения темы
+    function toggleTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      document.body.style.animation = 'none';
+      void document.body.offsetWidth;
+      document.body.style.animation = 'gradient-shift 1s ease-in-out';
+      closeThemeModal();
+    }
+
+    // Открытие модального окна тем
+    function openThemeModal() {
+      const modal = document.getElementById('themeModal');
+      const overlay = document.getElementById('modalOverlay');
+      modal.style.opacity = '0';
+      modal.classList.remove('hidden');
+      overlay.classList.remove('hidden');
+      modal.style.top = '50%';
+      modal.style.left = '50%';
+      modal.style.transform = 'translate(-50%, -50%)';
+      setTimeout(() => {
+        modal.style.opacity = '1';
+      }, 0);
+    }
+
+    // Закрытие модального окна
+    function closeThemeModal() {
+      const modal = document.getElementById('themeModal');
+      const overlay = document.getElementById('modalOverlay');
+      modal.style.opacity = '0';
+      setTimeout(() => {
+        modal.classList.add('hidden');
+        overlay.classList.add('hidden');
+      }, 300);
+    }
+
+    // Функция переключения языка
+    function toggleLanguage() {
+      const langToggle = document.getElementById('langToggle');
+      langToggle.classList.add('active');
+      setTimeout(() => langToggle.classList.remove('active'), 400);
+      const lang = localStorage.getItem('language') === 'en' ? 'ru' : 'en';
+      localStorage.setItem('language', lang);
+      document.getElementById('langIcon').textContent = lang === 'ru' ? '🇷🇺' : '🇬🇧';
+      correctAnswers = 0;
+      incorrectAnswers = 0;
+      localStorage.setItem('correctAnswers', correctAnswers);
+      localStorage.setItem('incorrectAnswers', incorrectAnswers);
+      updateUIText(lang);
+      document.getElementById('result').innerHTML = '';
+      document.getElementById('countryInput').value = '';
+      document.getElementById('countryInfo').innerHTML = '';
+      document.getElementById('countryInfo').classList.add('hidden');
+      toggleClearButton();
+      showTab(localStorage.getItem('activeTab') || 'search');
+    }
+
+    // Обновление текстов интерфейса
+    function updateUIText(lang) {
+      document.getElementById('header').textContent = lang === 'ru' ? 'Столицы стран' : 'Country Capitals';
+      document.getElementById('pageTitle').textContent = lang === 'ru' ? 'Столицы стран' : 'Country Capitals';
+      document.getElementById('countryInput').placeholder = lang === 'ru' ? 'Введите страну' : 'Enter country';
+      document.getElementById('findButton').textContent = lang === 'ru' ? 'Найти столицу' : 'Find Capital';
+      document.getElementById('modalTitle').textContent = lang === 'ru' ? 'Выберите тему' : 'Choose Theme';
+      document.getElementById('tabSearch').textContent = lang === 'ru' ? 'Поиск' : 'Search';
+      document.getElementById('tabQuiz').textContent = lang === 'ru' ? 'Викторина' : 'Quiz';
+      document.getElementById('nextQuestion').textContent = lang === 'ru' ? 'Следующий вопрос' : 'Next Question';
+      document.getElementById('resetQuiz').textContent = lang === 'ru' ? 'Начать заново' : 'Start Over';
+      document.getElementById('authorText').textContent = lang === 'ru' ? 'Автор' : 'Author';
+      updateScore();
+      updateThemeOptions(lang);
+    }
+
+    // Обновление опций тем
+    function updateThemeOptions(lang) {
+      const themeList = document.getElementById('themeList');
+      themeList.innerHTML = '';
+      const themes = [
+        { value: 'light', ru: 'Светлая', en: 'Light', color: '#E5E7EB' },
+        { value: 'dark', ru: 'Темная', en: 'Dark', color: '#374151' },
+        { value: 'sepia', ru: 'Сепия', en: 'Sepia', color: '#D4A373' },
+        { value: 'blue', ru: 'Голубая', en: 'Blue', color: '#60A5FA' },
+        { value: 'green', ru: 'Зеленая', en: 'Green', color: '#34D399' }
+      ];
+      themes.forEach(theme => {
+        const li = document.createElement('li');
+        li.className = 'theme-option flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded';
+        li.innerHTML = `
+          <span class="theme-dot w-3 h-3 rounded-full transition transform duration-200" style="background-color: ${theme.color}"></span>
+          <span>${lang === 'ru' ? theme.ru : theme.en}</span>
+        `;
+        li.addEventListener('click', () => toggleTheme(theme.value));
+        themeList.appendChild(li);
+      });
+    }
+
+    // Инициализация
+    const savedLang = localStorage.getItem('language') || 'ru';
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('langIcon').textContent = savedLang === 'ru' ? '🇷🇺' : '🇬🇧';
+    updateUIText(savedLang);
+    updateThemeOptions(savedLang);
+    toggleClearButton();
+    showTab('search');
+
+    // Обработчики событий
+    document.getElementById('themeToggle').addEventListener('click', openThemeModal);
+    document.getElementById('closeModal').addEventListener('click', closeThemeModal);
+    document.getElementById('modalOverlay').addEventListener('click', closeThemeModal);
+    document.getElementById('langToggle').addEventListener('click', toggleLanguage);
+    document.getElementById('countryInput').addEventListener('input', (e) => {
+      showSuggestions(e.target.value);
+      toggleClearButton();
+    });
+    document.getElementById('countryInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        findCapital();
+      }
+    });
+    document.getElementById('clearInput').addEventListener('click', () => {
+      const clearButton = document.getElementById('clearInput');
+      clearButton.classList.add('active');
+      setTimeout(() => clearButton.classList.remove('active'), 300);
+      const input = document.getElementById('countryInput');
+      const result = document.getElementById('result');
+      const countryInfo = document.getElementById('countryInfo');
+      const suggestions = document.getElementById('suggestions');
+      input.value = '';
+      result.innerHTML = '';
+      countryInfo.innerHTML = '';
+      countryInfo.classList.add('hidden');
+      suggestions.classList.add('hidden');
+      result.classList.remove('error', 'animate-flip-in', 'animate-shake');
+      toggleClearButton();
+    });
+    document.getElementById('tabSearch').addEventListener('click', () => {
+      localStorage.setItem('activeTab', 'search');
+      showTab('search');
+    });
+    document.getElementById('tabQuiz').addEventListener('click', () => {
+      localStorage.setItem('activeTab', 'quiz');
+      showTab('quiz');
+    });
+    document.getElementById('nextQuestion').addEventListener('click', startQuiz);
+    document.getElementById('resetQuiz').addEventListener('click', resetQuiz);
+    document.getElementById('authorLink').addEventListener('click', () => {
+      window.open('https://t.me/nkego', '_blank');
+    });
+  </script>
+</body>
+</html>
