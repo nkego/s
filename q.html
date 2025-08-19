@@ -1,0 +1,257 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Случайные цитаты</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .quote-slide {
+            animation: fadeIn 0.5s ease-in-out;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .theme-transition {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .telegram-btn, .link-btn {
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            z-index: 10;
+        }
+        .link-container {
+            position: fixed;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900 theme-transition min-h-screen flex items-center justify-center p-4">
+    <div class="link-container">
+        <a href="https://nkego.github.io/s/x.html" target="_blank" class="link-btn bg-white text-gray-600 hover:bg-gray-100 transition">на главную</a>
+    </div>
+    <div id="quoteWrapper" class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-lg w-full text-center relative theme-transition">
+        <button id="themeToggle" class="absolute top-4 right-4 text-gray-600 dark:text-gray-300">
+            <svg id="themeIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+        </button>
+        <h1 class="text-2xl font-semibold mb-4">Случайные цитаты</h1>
+        <div id="quoteContainer" class="space-y-4">
+            <div class="quote-slide">
+                <p id="quote-0" class="text-lg italic">"Нажмите кнопку, чтобы получить цитату."</p>
+                <p id="author-0" class="text-sm font-medium text-gray-600 dark:text-gray-400">— Автор</p>
+            </div>
+        </div>
+        <div class="flex justify-between mt-6">
+            <button id="prevQuoteBtn" class="bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition disabled:opacity-50">
+                Предыдущая
+            </button>
+            <button id="newQuoteBtn" class="bg-blue-500 dark:bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-800 transition flex items-center">
+                <span id="btnText">Новая цитата</span>
+                <svg id="loadingIcon" class="w-5 h-5 ml-2 hidden spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12a8 8 0 0116 0 8 8 0 01-16 0z" />
+                </svg>
+            </button>
+        </div>
+        <p id="error" class="text-red-500 text-sm mt-4 hidden">Не удалось загрузить цитату. Попробуйте снова.</p>
+    </div>
+    <a id="telegramBtn" href="https://t.me/nkego" target="_blank" class="fixed bottom-4 right-4 bg-white text-gray-600 telegram-btn hover:bg-gray-100 transition">
+        Автор
+    </a>
+
+    <script>
+        let quotes = [];
+        let currentIndex = 0;
+        const maxQuotes = 5;
+
+        function getRandomQuote() {
+            document.getElementById('newQuoteBtn').disabled = true;
+            document.getElementById('btnText').textContent = 'Загрузка...';
+            document.getElementById('loadingIcon').classList.remove('hidden');
+            $.ajax({
+                url: 'https://api.forismatic.com/api/1.0/',
+                jsonp: 'jsonp',
+                dataType: 'jsonp',
+                data: {
+                    method: 'getQuote',
+                    lang: 'ru',
+                    format: 'jsonp'
+                },
+                success: function(response) {
+                    const quote = response.quoteText;
+                    const author = response.quoteAuthor || 'Аноним';
+                    quotes.push({ text: quote, author });
+                    if (quotes.length > maxQuotes) quotes.shift();
+                    currentIndex = quotes.length - 1;
+                    updateQuoteDisplay();
+                    document.getElementById('error').classList.add('hidden');
+                },
+                error: function() {
+                    document.getElementById('error').classList.remove('hidden');
+                },
+                complete: function() {
+                    document.getElementById('newQuoteBtn').disabled = false;
+                    document.getElementById('btnText').textContent = 'Новая цитата';
+                    document.getElementById('loadingIcon').classList.add('hidden');
+                }
+            });
+        }
+
+        function updateQuoteDisplay() {
+            const container = document.getElementById('quoteContainer');
+            container.innerHTML = '';
+            const { text, author } = quotes[currentIndex];
+            container.innerHTML = `
+                <div class="quote-slide">
+                    <p id="quote-${currentIndex}" class="text-lg italic">"${text}"</p>
+                    <p id="author-${currentIndex}" class="text-sm font-medium text-gray-600 dark:text-gray-400">— ${author}</p>
+                </div>
+            `;
+            document.getElementById('prevQuoteBtn').disabled = currentIndex === 0;
+        }
+
+        document.getElementById('newQuoteBtn').addEventListener('click', getRandomQuote);
+        document.getElementById('prevQuoteBtn').addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateQuoteDisplay();
+            }
+        });
+
+        // Переключение темы
+        function toggleTheme() {
+            const isDark = document.body.classList.toggle('dark');
+            const themeIcon = document.getElementById('themeIcon');
+            themeIcon.innerHTML = isDark
+                ? `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>`
+                : `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>`;
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+            // Применение стилей для темной темы
+            document.body.classList.toggle('bg-gray-900', isDark);
+            document.body.classList.toggle('text-white', isDark);
+            document.body.classList.toggle('bg-gray-100', !isDark);
+            document.body.classList.toggle('text-gray-900', !isDark);
+            const quoteWrapper = document.getElementById('quoteWrapper');
+            quoteWrapper.classList.toggle('bg-white', !isDark);
+            quoteWrapper.classList.toggle('dark:bg-gray-800', isDark);
+            document.querySelector('.bg-gray-200').classList.toggle('dark:bg-gray-700', isDark);
+            document.querySelector('.text-gray-600').classList.toggle('dark:text-gray-400', isDark);
+            document.getElementById('themeToggle').classList.toggle('dark:text-gray-300', isDark);
+            document.getElementById('prevQuoteBtn').classList.toggle('dark:text-white', isDark);
+            document.getElementById('telegramBtn').classList.toggle('dark:bg-gray-800', isDark);
+            document.getElementById('telegramBtn').classList.toggle('bg-white', !isDark);
+            document.getElementById('telegramBtn').classList.toggle('dark:text-gray-300', isDark);
+            document.getElementById('telegramBtn').classList.toggle('text-gray-600', !isDark);
+            document.querySelectorAll('.link-btn').forEach(btn => {
+                btn.classList.toggle('dark:bg-gray-800', isDark);
+                btn.classList.toggle('bg-white', !isDark);
+                btn.classList.toggle('dark:text-gray-300', isDark);
+                btn.classList.toggle('text-gray-600', !isDark);
+            });
+        }
+
+        // Инициализация темы
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+            if (isDark) {
+                document.body.classList.add('dark');
+                document.body.classList.add('bg-gray-900', 'text-white');
+                document.body.classList.remove('bg-gray-100', 'text-gray-900');
+                document.getElementById('quoteWrapper').classList.add('dark:bg-gray-800');
+                document.getElementById('quoteWrapper').classList.remove('bg-white');
+                document.querySelector('.bg-gray-200').classList.add('dark:bg-gray-700');
+                document.querySelector('.text-gray-600').classList.add('dark:text-gray-400');
+                document.getElementById('themeToggle').classList.add('dark:text-gray-300');
+                document.getElementById('prevQuoteBtn').classList.add('dark:text-white');
+                document.getElementById('telegramBtn').classList.add('dark:bg-gray-800', 'dark:text-gray-300');
+                document.getElementById('telegramBtn').classList.remove('bg-white', 'text-gray-600');
+                document.querySelectorAll('.link-btn').forEach(btn => {
+                    btn.classList.add('dark:bg-gray-800', 'dark:text-gray-300');
+                    btn.classList.remove('bg-white', 'text-gray-600');
+                });
+                document.getElementById('themeIcon').innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>`;
+            } else {
+                document.body.classList.remove('dark');
+                document.body.classList.add('bg-gray-100', 'text-gray-900');
+                document.body.classList.remove('bg-gray-900', 'text-white');
+                document.getElementById('quoteWrapper').classList.add('bg-white');
+                document.getElementById('quoteWrapper').classList.remove('dark:bg-gray-800');
+                document.querySelector('.bg-gray-200').classList.remove('dark:bg-gray-700');
+                document.querySelector('.text-gray-600').classList.remove('dark:text-gray-400');
+                document.getElementById('themeToggle').classList.remove('dark:text-gray-300');
+                document.getElementById('prevQuoteBtn').classList.remove('dark:text-white');
+                document.getElementById('telegramBtn').classList.add('bg-white', 'text-gray-600');
+                document.getElementById('telegramBtn').classList.remove('dark:bg-gray-800', 'dark:text-gray-300');
+                document.querySelectorAll('.link-btn').forEach(btn => {
+                    btn.classList.add('bg-white', 'text-gray-600');
+                    btn.classList.remove('dark:bg-gray-800', 'dark:text-gray-300');
+                });
+                document.getElementById('themeIcon').innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>`;
+            }
+        }
+
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+        // Инициализация темы и загрузка цитаты
+        initTheme();
+        getRandomQuote();
+    </script>
+</body>
+</html>
