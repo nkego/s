@@ -1,0 +1,438 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Поиск региона России по номеру</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif; }
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-ripple {
+      position: relative;
+      overflow: hidden;
+    }
+    .animate-ripple::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      animation: ripple 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes ripple {
+      to { width: 200%; height: 200%; opacity: 0; }
+    }
+    .theme-transition {
+      transition: all 0.3s ease;
+    }
+    /* Модальное окно */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 20;
+    }
+    .modal-content {
+      background: #ffffff;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      width: 90%;
+      max-width: 300px;
+    }
+    .theme-sepia .modal-content { background: #f5e9c6; }
+    .dark .modal-content { background: #374151; }
+    .modal-content button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.3s ease;
+    }
+    .dark .modal-content button { color: #e5e7eb; }
+    .theme-sepia .modal-content button { color: #4a3728; }
+    .modal-content button:hover { background: rgba(0, 0, 0, 0.1); }
+    .theme-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .theme-circle.light { background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb); }
+    .theme-circle.dark { background: linear-gradient(to bottom right, #1f2937, #111827); }
+    .theme-circle.sepia { background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3); }
+    /* Светлая тема */
+    body {
+      background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+    }
+    .theme-light .theme-toggle { background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb); }
+    /* Темная тема */
+    body.dark {
+      background: linear-gradient(to bottom right, #1f2937, #111827);
+    }
+    .theme-dark .theme-toggle { background: linear-gradient(to bottom right, #1f2937, #111827); }
+    body.dark .input-dark {
+      background-color: #1f2937;
+      color: #f9fafb;
+      border-color: #4b5563;
+    }
+    body.dark .button-dark {
+      background: linear-gradient(to right, #1e3a8a, #1e40af);
+    }
+    body.dark .button-dark:hover {
+      background: linear-gradient(to right, #1e40af, #1e3a8a);
+    }
+    body.dark .title-dark {
+      background: linear-gradient(to right, #e5e7eb, #d1d5db);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    /* Сепия-тема */
+    body.theme-sepia {
+      background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3);
+    }
+    .theme-sepia .theme-toggle { background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3); }
+    .theme-sepia .input-dark { background-color: #f9f0d8; border-color: #d9c8a6; color: #4a3728; }
+    .theme-sepia .text-red-500 { color: #a94438; }
+    .theme-sepia .button-dark { background: linear-gradient(to right, #d4a276, #b68a5e); }
+    .theme-sepia .button-dark:hover { background: linear-gradient(to right, #c49368, #a77b54); }
+    .theme-sepia .focus\:ring-blue-400 { --tw-ring-color: #a77b54; }
+    .theme-sepia .text-black { color: #4a3728; }
+    .theme-sepia .title-dark { color: #4a3728; }
+  </style>
+</head>
+<body class="theme-transition min-h-screen flex flex-col items-center justify-center p-4">
+  <div class="fixed top-4 right-4 z-10">
+    <button id="theme-toggle" class="p-3 rounded-full text-gray-800 dark:text-gray-200 theme-toggle theme-transition shadow-md" aria-label="Выбрать тему">
+      <span class="text-xl">🎨</span>
+    </button>
+  </div>
+  <div id="theme-modal" class="modal">
+    <div class="modal-content">
+      <button onclick="setTheme('light')">
+        Светлая <span class="theme-circle light"></span>
+      </button>
+      <button onclick="setTheme('dark')">
+        Темная <span class="theme-circle dark"></span>
+      </button>
+      <button onclick="setTheme('sepia')">
+        Сепия <span class="theme-circle sepia"></span>
+      </button>
+    </div>
+  </div>
+  <h1 class="text-3xl font-semibold text-center mb-6 text-black title-dark">
+    Поиск региона России
+  </h1>
+  <input
+    id="region-code"
+    type="text"
+    placeholder="Введите код региона (1-799)"
+    class="w-full max-w-sm p-3 border rounded-lg input-dark focus:outline-none focus:ring-2 focus:ring-blue-400 theme-transition"
+  >
+  <button
+    id="search-button"
+    class="mt-4 w-full max-w-sm p-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-600 button-dark focus:ring-2 focus:ring-blue-400 theme-transition animate-ripple"
+  >
+    Найти регион
+  </button>
+  <p id="result" class="mt-6 text-center text-xl font-medium text-gray-800 dark:text-gray-200 hidden animate-fade-in"></p>
+  <p id="error" class="mt-6 text-center text-red-500 dark:text-red-400 hidden animate-fade-in"></p>
+<script>
+  // Объект регионов для заполнения пользователем
+  const regions = {
+      "01": "Республика Адыгея",
+      "02": "Республика Башкортостан",
+      "03": "Республика Бурятия",
+      "04": "Республика Алтай",
+      "05": "Республика Дагестан",
+      "06": "Республика Ингушетия",
+      "07": "Кабардино-Балкарская Республика",
+      "08": "Республика Калмыкия",
+      "09": "Карачаево-Черкесская Республика",
+      "10": "Республика Карелия",
+      "11": "Республика Коми",
+      "12": "Республика Марий Эл",
+      "13": "Республика Мордовия",
+      "14": "Республика Саха (Якутия)",
+      "15": "Республика Северная Осетия-Алания",
+      "16": "Республика Татарстан",
+      "17": "Республика Тыва",
+      "18": "Удмуртская Республика",
+      "19": "Республика Хакасия",
+      "21": "Чувашская Республика",
+      "22": "Алтайский край",
+      "23": "Краснодарский край",
+      "24": "Красноярский край",
+      "25": "Приморский край",
+      "26": "Ставропольский край",
+      "27": "Хабаровский край",
+      "28": "Амурская область",
+      "29": "Архангельская область",
+      "30": "Астраханская область",
+      "31": "Белгородская область",
+      "32": "Брянская область",
+      "33": "Владимирская область",
+      "34": "Волгоградская область",
+      "35": "Вологодская область",
+      "36": "Воронежская область",
+      "37": "Ивановская область",
+      "38": "Иркутская область",
+      "39": "Калининградская область",
+      "40": "Калужская область",
+      "41": "Камчатский край",
+      "42": "Кемеровская область",
+      "43": "Кировская область",
+      "44": "Костромская область",
+      "45": "Курганская область",
+      "46": "Курская область",
+      "47": "Ленинградская область",
+      "48": "Липецкая область",
+      "49": "Магаданская область",
+      "50": "Московская область",
+      "51": "Мурманская область",
+      "52": "Нижегородская область",
+      "53": "Новгородская область",
+      "54": "Новосибирская область",
+      "55": "Омская область",
+      "56": "Оренбургская область",
+      "57": "Орловская область",
+      "58": "Пензенская область",
+      "59": "Пермский край",
+      "60": "Псковская область",
+      "61": "Ростовская область",
+      "62": "Рязанская область",
+      "63": "Самарская область",
+      "64": "Саратовская область",
+      "65": "Сахалинская область",
+      "66": "Свердловская область",
+      "67": "Смоленская область",
+      "68": "Тамбовская область",
+      "69": "Тверская область",
+      "70": "Томская область",
+      "71": "Тульская область",
+      "72": "Тюменская область",
+      "73": "Ульяновская область",
+      "74": "Челябинская область",
+      "75": "Забайкальский край",
+      "76": "Ярославская область",
+      "77": "Москва",
+      "78": "Санкт-Петербург",
+      "79": "Еврейская автономная область",
+      "83": "Ненецкий автономный округ",
+      "86": "Ханты-Мансийский автономный округ",
+      "87": "Чукотский автономный округ",
+      "89": "Ямало-Ненецкий автономный округ",
+      "92": "Республика Крым",
+      "93": "Краснодарский край",
+      "94": "Территории, находящиеся за пределами РФ",
+      "95": "Чеченская Республика",
+      "96": "Свердловская область",
+      "97": "Москва",
+      "98": "Санкт-Петербург",
+      "99": "Москва",
+      "102": "Республика Башкортостан",
+      "113": "Республика Мордовия",
+      "116": "Республика Татарстан",
+      "121": "Чувашская Республика",
+      "123": "Краснодарский край",
+      "124": "Красноярский край",
+      "125": "Приморский край",
+      "126": "Ставропольский край",
+      "134": "Волгоградская область",
+      "136": "Воронежская область",
+      "138": "Иркутская область",
+      "142": "Кемеровская область",
+      "150": "Московская область",
+      "152": "Нижегородская область",
+      "154": "Новосибирская область",
+      "159": "Пермский край",
+      "161": "Ростовская область",
+      "163": "Самарская область",
+      "164": "Саратовская область",
+      "173": "Ульяновская область",
+      "174": "Челябинская область",
+      "177": "Москва",
+      "178": "Санкт-Петербург",
+      "186": "Ханты-Мансийский автономный округ",
+      "190": "Московская область",
+      "193": "Краснодарский край",
+      "196": "Свердловская область",
+      "197": "Москва",
+      "198": "Санкт-Петербург",
+      "199": "Москва",
+      "777": "Москва",
+      "799": "Москва",
+    };
+
+  // Элементы DOM
+  const input = document.getElementById('region-code');
+  const button = document.getElementById('search-button');
+  const result = document.getElementById('result');
+  const error = document.getElementById('error');
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeModal = document.getElementById('theme-modal');
+
+  // Управление темами
+  const themes = ['light', 'dark', 'sepia'];
+  let currentTheme = localStorage.getItem('theme') || 'light';
+
+  function applyTheme(theme) {
+    // Удаляем все классы тем
+    document.body.classList.remove('dark', 'theme-sepia', 'theme-light', 'theme-dark', 'theme-sepia');
+    // Добавляем текущую тему как класс для отладки
+    document.body.classList.add(`theme-${theme}`);
+    // Добавляем нужный класс темы
+    if (theme === 'dark') {
+      document.body.classList.add('dark');
+    } else if (theme === 'sepia') {
+      document.body.classList.add('theme-sepia');
+    }
+    localStorage.setItem('theme', theme);
+    // Отладка: логируем текущую тему и классы body
+    console.log('Текущая тема:', theme);
+    console.log('Классы body:', document.body.className);
+  }
+
+  // Установка темы
+  function setTheme(theme) {
+    currentTheme = theme;
+    applyTheme(theme);
+    themeModal.style.display = 'none';
+  }
+
+  // Применяем начальную тему
+  applyTheme(currentTheme);
+
+  // Открытие/закрытие модального окна
+  themeToggle.addEventListener('click', () => {
+    themeModal.style.display = 'block';
+  });
+
+  // Закрытие модального окна при клике вне
+  window.addEventListener('click', (e) => {
+    if (e.target === themeModal) {
+      themeModal.style.display = 'none';
+    }
+  });
+
+  // Обработка ввода
+  input.addEventListener('input', () => {
+    const value = input.value.replace(/\D/g, '');
+    if (value.length <= 3) {
+      input.value = value;
+      result.classList.add('hidden');
+      error.classList.add('hidden');
+    }
+  });
+
+  // Обработка поиска
+  button.addEventListener('click', () => {
+    const code = input.value.trim();
+    if (code && regions[code]) {
+      result.textContent = `Регион: ${regions[code]}`;
+      result.classList.remove('hidden');
+      result.classList.add('animate-fade-in');
+      error.classList.add('hidden');
+    } else {
+      error.textContent = 'Неверный код региона';
+      error.classList.remove('hidden');
+      error.classList.add('animate-fade-in');
+      result.classList.add('hidden');
+    }
+  });
+
+  // Поддержка Enter
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      button.click();
+    }
+  });
+
+  // Анимация ripple для кнопки
+  button.addEventListener('click', (e) => {
+    const rect = button.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'absolute bg-white opacity-30 rounded-full';
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+    ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+    ripple.style.transform = 'scale(0)';
+    ripple.animate(
+      { transform: 'scale(4)', opacity: 0 },
+      { duration: 600, easing: 'ease-out' }
+    );
+    button.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  });
+</script>
+</body>
+</html>
