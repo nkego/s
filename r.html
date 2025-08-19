@@ -42,7 +42,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Поиск региона России по номеру</title>
+  <title>Поиск региона</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -132,12 +132,16 @@
     body {
       background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
     }
-    .theme-light .theme-toggle { background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb); }
+    .theme-light .theme-toggle, .theme-light .site-link-button, .theme-light .telegram-link-button {
+      background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+    }
     /* Темная тема */
     body.dark {
       background: linear-gradient(to bottom right, #1f2937, #111827);
     }
-    .theme-dark .theme-toggle { background: linear-gradient(to bottom right, #1f2937, #111827); }
+    .theme-dark .theme-toggle, .theme-dark .site-link-button, .theme-dark .telegram-link-button {
+      background: linear-gradient(to bottom right, #1f2937, #111827);
+    }
     body.dark .input-dark {
       background-color: #1f2937;
       color: #f9fafb;
@@ -155,11 +159,14 @@
       background-clip: text;
       color: transparent;
     }
+    body.dark .result-text { color: #f9fafb; }
     /* Сепия-тема */
     body.theme-sepia {
       background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3);
     }
-    .theme-sepia .theme-toggle { background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3); }
+    .theme-sepia .theme-toggle, .theme-sepia .site-link-button, .theme-sepia .telegram-link-button {
+      background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3);
+    }
     .theme-sepia .input-dark { background-color: #f9f0d8; border-color: #d9c8a6; color: #4a3728; }
     .theme-sepia .text-red-500 { color: #a94438; }
     .theme-sepia .button-dark { background: linear-gradient(to right, #d4a276, #b68a5e); }
@@ -167,11 +174,25 @@
     .theme-sepia .focus\:ring-blue-400 { --tw-ring-color: #a77b54; }
     .theme-sepia .text-black { color: #4a3728; }
     .theme-sepia .title-dark { color: #4a3728; }
+    .theme-sepia .result-text { color: #4a3728; }
   </style>
 </head>
 <body class="theme-transition min-h-screen flex flex-col items-center justify-center p-4">
-  <div class="fixed top-4 right-4 z-10">
-    <button id="theme-toggle" class="p-3 rounded-full text-gray-800 dark:text-gray-200 theme-toggle theme-transition shadow-md" aria-label="Выбрать тему">
+  <div class="fixed top-4 left-4 z-10">
+    <button id="site-link" class="p-2 rounded-full site-link-button theme-transition shadow-md animate-ripple" aria-label="Перейти на сайт">
+      <span class="text-xl">страны</span>
+    </button>
+  </div>
+  <div class="fixed bottom-4 right-4 z-10">
+    <button id="telegram-link" class="p-2 rounded-full telegram-link-button theme-transition shadow-md animate-ripple" aria-label="Telegram автора">
+      <span class="text-xl">Автор</span>
+    </button>
+  </div>
+  <div class="flex items-center justify-center mb-6">
+    <h1 class="text-3xl font-semibold text-black title-dark">
+      Поиск региона
+    </h1>
+    <button id="theme-toggle" class="ml-4 p-2 rounded-full text-gray-800 dark:text-gray-200 theme-toggle theme-transition shadow-md" aria-label="Выбрать тему">
       <span class="text-xl">🎨</span>
     </button>
   </div>
@@ -188,22 +209,19 @@
       </button>
     </div>
   </div>
-  <h1 class="text-3xl font-semibold text-center mb-6 text-black title-dark">
-    Поиск региона России
-  </h1>
   <input
     id="region-code"
     type="text"
     placeholder="Введите код региона (1-799)"
-    class="w-full max-w-sm p-3 border rounded-lg input-dark focus:outline-none focus:ring-2 focus:ring-blue-400 theme-transition"
+    class="w-full max-w-xs p-3 border rounded-lg input-dark focus:outline-none focus:ring-2 focus:ring-blue-400 theme-transition"
   >
   <button
     id="search-button"
-    class="mt-4 w-full max-w-sm p-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-600 button-dark focus:ring-2 focus:ring-blue-400 theme-transition animate-ripple"
+    class="mt-4 w-full max-w-xs p-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-600 button-dark focus:ring-2 focus:ring-blue-400 theme-transition animate-ripple"
   >
     Найти регион
   </button>
-  <p id="result" class="mt-6 text-center text-xl font-medium text-gray-800 dark:text-gray-200 hidden animate-fade-in"></p>
+  <p id="result" class="mt-6 text-center text-xl font-medium text-gray-800 result-text hidden animate-fade-in"></p>
   <p id="error" class="mt-6 text-center text-red-500 dark:text-red-400 hidden animate-fade-in"></p>
 <script>
   // Объект регионов для заполнения пользователем
@@ -339,6 +357,8 @@
   const error = document.getElementById('error');
   const themeToggle = document.getElementById('theme-toggle');
   const themeModal = document.getElementById('theme-modal');
+  const siteLink = document.getElementById('site-link');
+  const telegramLink = document.getElementById('telegram-link');
 
   // Управление темами
   const themes = ['light', 'dark', 'sepia'];
@@ -383,6 +403,16 @@
     }
   });
 
+  // Переход на новый сайт
+  siteLink.addEventListener('click', () => {
+    window.open('https://nkego.github.io/s/x.html', '_blank');
+  });
+
+  // Переход на Telegram автора
+  telegramLink.addEventListener('click', () => {
+    window.open('https://t.me/nkego', '_blank');
+  });
+
   // Обработка ввода
   input.addEventListener('input', () => {
     const value = input.value.replace(/\D/g, '');
@@ -416,7 +446,7 @@
     }
   });
 
-  // Анимация ripple для кнопки
+  // Анимация ripple для кнопки поиска
   button.addEventListener('click', (e) => {
     const rect = button.getBoundingClientRect();
     const ripple = document.createElement('span');
@@ -431,6 +461,42 @@
       { duration: 600, easing: 'ease-out' }
     );
     button.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  });
+
+  // Анимация ripple для кнопки перехода на сайт
+  siteLink.addEventListener('click', (e) => {
+    const rect = siteLink.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'absolute bg-white opacity-30 rounded-full';
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+    ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+    ripple.style.transform = 'scale(0)';
+    ripple.animate(
+      { transform: 'scale(4)', opacity: 0 },
+      { duration: 600, easing: 'ease-out' }
+    );
+    siteLink.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  });
+
+  // Анимация ripple для кнопки Telegram
+  telegramLink.addEventListener('click', (e) => {
+    const rect = telegramLink.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'absolute bg-white opacity-30 rounded-full';
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+    ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+    ripple.style.transform = 'scale(0)';
+    ripple.animate(
+      { transform: 'scale(4)', opacity: 0 },
+      { duration: 600, easing: 'ease-out' }
+    );
+    telegramLink.appendChild(ripple);
     setTimeout(() => ripple.remove(), 600);
   });
 </script>
