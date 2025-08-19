@@ -49,7 +49,7 @@
         body {
             font-family: 'Inter', sans-serif;
             margin: 0;
-            padding: 40px;
+            padding: 80px 40px 40px 40px;
             background-color: #f5f5f5;
             color: #1a1a1a;
             transition: background-color 0.3s ease, color 0.3s ease;
@@ -61,12 +61,16 @@
         .info-section {
             max-width: 600px;
             margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         h1 {
             font-size: 24px;
             font-weight: 600;
             margin-bottom: 24px;
             color: #1a1a1a;
+            align-self: flex-start;
         }
         body.dark-mode h1 {
             color: #e0e0e0;
@@ -76,6 +80,7 @@
             margin: 12px 0;
             display: flex;
             gap: 12px;
+            width: 100%;
         }
         .label {
             font-weight: 500;
@@ -86,10 +91,10 @@
             color: #b0b0b0;
         }
         .value {
-            color: #2b6cb0; /* Мягкий синий для светлой темы */
+            color: #2b6cb0;
         }
         body.dark-mode .value {
-            color: #1e4d99; /* Такой же темно-синий, как у кнопки в темной теме */
+            color: #1e4d99;
         }
         .loading {
             color: #888;
@@ -102,6 +107,7 @@
             margin-top: 20px;
             display: none;
             font-size: 14px;
+            align-self: flex-start;
         }
         body.dark-mode #error {
             color: #ff6666;
@@ -110,9 +116,10 @@
             height: 200px;
             margin: 20px 0;
             border-radius: 4px;
+            width: 100%;
         }
         button.refresh {
-            padding: 8px 16px;
+            padding: 10px 24px;
             font-size: 14px;
             cursor: pointer;
             background-color: #2b6cb0;
@@ -120,6 +127,8 @@
             border: none;
             border-radius: 4px;
             transition: background-color 0.3s ease;
+            width: 200px;
+            margin-top: 20px;
         }
         button.refresh:hover {
             background-color: #2c5282;
@@ -130,10 +139,9 @@
         body.dark-mode button.refresh:hover {
             background-color: #153e80;
         }
-        #theme-toggle {
+        #theme-toggle, #lang-toggle {
             position: fixed;
             top: 20px;
-            right: 20px;
             background: none;
             border: none;
             font-size: 20px;
@@ -141,29 +149,90 @@
             color: #4a4a4a;
             transition: color 0.3s ease;
         }
-        body.dark-mode #theme-toggle {
+        #theme-toggle {
+            right: 20px;
+        }
+        #lang-toggle {
+            right: 60px;
+        }
+        body.dark-mode #theme-toggle, body.dark-mode #lang-toggle {
             color: #e0e0e0;
+        }
+        .site-button {
+            position: fixed;
+            top: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #f5f5f5;
+            color: #1a1a1a; /* Темный текст в светлой теме */
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            transition: background-color 0.3s ease;
+        }
+        #site-button-1 {
+            left: 20px;
+        }
+        #site-button-2 {
+            left: 120px;
+        }
+        .site-button:hover {
+            background-color: #e0e0e0;
+        }
+        body.dark-mode .site-button {
+            background-color: #1a1a1a;
+            color: #ffffff; /* Белый текст в темной теме */
+        }
+        body.dark-mode .site-button:hover {
+            background-color: #333333;
+        }
+        #telegram-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #f5f5f5;
+            color: #1a1a1a; /* Темный текст в светлой теме */
+            border: none;
+            border-radius: 20px;
+            transition: background-color 0.3s ease;
+        }
+        #telegram-button:hover {
+            background-color: #e0e0e0;
+        }
+        body.dark-mode #telegram-button {
+            background-color: #1a1a1a;
+            color: #ffffff; /* Белый текст в темной теме */
+        }
+        body.dark-mode #telegram-button:hover {
+            background-color: #333333;
         }
     </style>
 </head>
 <body>
-    <button id="theme-toggle" title="Переключить тему">☼</button>
+    <button id="lang-toggle" title="Switch language">⭕</button>
+    <button id="theme-toggle" title="Switch theme">☼</button>
+    <button class="site-button" id="site-button-1" onclick="window.open('https://nkego.github.io/s/x.html', '_blank')">Страны</button>
+    <button class="site-button" id="site-button-2" onclick="window.open('https://nkego.github.io/s/r.html', '_blank')">Регионы</button>
+    <button id="telegram-button" onclick="window.open('https://t.me/nkego', '_blank')">Автор</button>
     <div class="info-section">
-        <h1>Информация о подключении</h1>
-        <div class="info"><span class="label">IP-адрес:</span> <span class="value" id="ip-address">Загрузка...</span></div>
-        <div class="info"><span class="label">Город:</span> <span class="value" id="city">Загрузка...</span></div>
-        <div class="info"><span class="label">Регион:</span> <span class="value" id="region">Загрузка...</span></div>
-        <div class="info"><span class="label">Страна:</span> <span class="value" id="country">Загрузка...</span></div>
-        <div class="info"><span class="label">Провайдер:</span> <span class="value" id="isp">Загрузка...</span></div>
-        <div class="info"><span class="label">Часовой пояс:</span> <span class="value" id="timezone">Загрузка...</span></div>
-        <div class="info"><span class="label">Локальное время:</span> <span class="value" id="local-time">Загрузка...</span></div>
-        <div class="info"><span class="label">Браузер:</span> <span class="value" id="browser">Загрузка...</span></div>
-        <div class="info"><span class="label">Тип соединения:</span> <span class="value" id="connection-type">Загрузка...</span></div>
-        <div class="info"><span class="label">Скорость соединения:</span> <span class="value" id="connection-speed">Загрузка...</span></div>
-        <div class="info"><span class="label">Координаты:</span> <span class="value" id="coordinates">Загрузка...</span></div>
+        <h1 data-lang-ru="Информация о подключении" data-lang-en="Connection Information">Информация о подключении</h1>
+        <div class="info"><span class="label" data-lang-ru="IP-адрес:" data-lang-en="IP Address:">IP-адрес:</span> <span class="value" id="ip-address">Загрузка...</span></div>
+        <div class="info"><span class="label" data-lang-ru="Город:" data-lang-en="City:">Город:</span> <span class="value" id="city">Загрузка...</span></div>
+        <div class="info"><span class="label" data-lang-ru="Регион:" data-lang-en="Region:">Регион:</span> <span class="value" id="region">Загрузка...</span></div>
+        <div class="info"><span class="label" data-lang-ru="Страна:" data-lang-en="Country:">Страна:</span> <span class="value" id="country">Загрузка...</span></div>
+        <div class="info"><span class="label" data-lang-ru="Провайдер:" data-lang-en="ISP:">Провайдер:</span> <span class="value" id="isp">Загрузка...</span></div>
+        <div class="info"><span class="label" data-lang-ru="Часовой пояс:" data-lang-en="Timezone:">Часовой пояс:</span> <span class="value" id="timezone">Загрузка...</span></div>
+        <div class="info"><span class="label" data-lang-ru="Локальное время:" data-lang-en="Local Time:">Локальное время:</span> <span class="value" id="local-time">Загрузка...</span></div>
+        <div class="info"><span class="label" data-lang-ru="Браузер:" data-lang-en="Browser:">Браузер:</span> <span class="value" id="browser">Загрузка...</span></div>
+        <div class="info"><span class="label" data-lang-ru="Тип соединения:" data-lang-en="Connection Type:">Тип соединения:</span> <span class="value" id="connection-type">Загрузка...</span></div>
+        <div class="info"><span class="label" data-lang-ru="Скорость соединения:" data-lang-en="Connection Speed:">Скорость соединения:</span> <span class="value" id="connection-speed">Загрузка...</span></div>
+        <div class="info"><span class="label" data-lang-ru="Координаты:" data-lang-en="Coordinates:">Координаты:</span> <span class="value" id="coordinates">Загрузка...</span></div>
         <div id="map"></div>
-        <div id="error"></div>
-        <button class="refresh" onclick="fetchUserInfo()">Обновить данные</button>
+        <div id="error" data-lang-ru="Не удалось загрузить информацию. Попробуйте позже или проверьте настройки VPN." data-lang-en="Failed to load information. Try again later or check VPN settings."></div>
+        <button class="refresh" onclick="fetchUserInfo()" data-lang-ru="Обновить данные" data-lang-en="Refresh Data">Обновить данные</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -195,15 +264,24 @@
             }
         }
 
+        function updateLanguage() {
+            const lang = localStorage.getItem('language') || 'ru';
+            document.querySelectorAll('[data-lang-ru][data-lang-en]').forEach(element => {
+                element.textContent = element.getAttribute(`data-lang-${lang}`);
+            });
+            document.documentElement.lang = lang;
+        }
+
         async function fetchUserInfo() {
             const fields = ['ip-address', 'city', 'region', 'country', 'isp', 'timezone', 'coordinates', 'local-time', 'browser', 'connection-type', 'connection-speed'];
             const mapElement = document.getElementById('map');
             const errorDiv = document.getElementById('error');
+            const lang = localStorage.getItem('language') || 'ru';
 
             fields.forEach(field => {
                 const element = document.getElementById(field);
                 if (element) {
-                    element.textContent = 'Загрузка...';
+                    element.textContent = lang === 'ru' ? 'Загрузка...' : 'Loading...';
                     element.classList.add('loading');
                 }
             });
@@ -220,30 +298,31 @@
                     data = await response.json();
                 }
 
-                document.getElementById('ip-address').textContent = data.ip || 'Неизвестно';
-                document.getElementById('city').textContent = data.city || 'Неизвестно';
-                document.getElementById('region').textContent = data.region || data.state_prov || 'Неизвестно';
-                document.getElementById('country').textContent = data.country_name || 'Неизвестно';
-                document.getElementById('isp').textContent = data.org || data.isp || 'Неизвестно';
-                document.getElementById('timezone').textContent = data.timezone || data.time_zone?.name || 'Неизвестно';
+                document.getElementById('ip-address').textContent = data.ip || (lang === 'ru' ? 'Неизвестно' : 'Unknown');
+                document.getElementById('city').textContent = data.city || (lang === 'ru' ? 'Неизвестно' : 'Unknown');
+                document.getElementById('region').textContent = data.region || data.state_prov || (lang === 'ru' ? 'Неизвестно' : 'Unknown');
+                document.getElementById('country').textContent = data.country_name || (lang === 'ru' ? 'Неизвестно' : 'Unknown');
+                document.getElementById('isp').textContent = data.org || data.isp || (lang === 'ru' ? 'Неизвестно' : 'Unknown');
+                document.getElementById('timezone').textContent = data.timezone || data.time_zone?.name || (lang === 'ru' ? 'Неизвестно' : 'Unknown');
                 document.getElementById('coordinates').textContent = 
                     data.latitude && data.longitude 
                     ? `${data.latitude}, ${data.longitude}` 
-                    : 'Неизвестно';
+                    : (lang === 'ru' ? 'Неизвестно' : 'Unknown');
 
                 const timezone = data.timezone || data.time_zone?.name || 'UTC';
                 const now = new Date();
                 const options = { timeZone: timezone, hour: '2-digit', minute: '2-digit', second: '2-digit' };
-                document.getElementById('local-time').textContent = now.toLocaleTimeString('ru-RU', options);
+                document.getElementById('local-time').textContent = now.toLocaleTimeString(lang === 'ru' ? 'ru-RU' : 'en-US', options);
 
-                const browserInfo = `${navigator.userAgent.match(/(firefox|chrome|safari|opera|edge)\/([\d.]+)/i)?.[1] || 'Неизвестный браузер'} ${
+                const browserInfo = `${navigator.userAgent.match(/(firefox|chrome|safari|opera|edge)\/([\d.]+)/i)?.[1] || (lang === 'ru' ? 'Неизвестный браузер' : 'Unknown browser')} ${
                     navigator.userAgent.match(/(firefox|chrome|safari|opera|edge)\/([\d.]+)/i)?.[2] || ''} (${navigator.platform})`;
                 document.getElementById('browser').textContent = browserInfo;
 
                 const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-                document.getElementById('connection-type').textContent = connection ? (connection.type || connection.effectiveType || 'Неизвестно') : 'Неизвестно';
+                document.getElementById('connection-type').textContent = connection ? (connection.type || connection.effectiveType || (lang === 'ru' ? 'Неизвестно' : 'Unknown')) : (lang === 'ru' ? 'Неизвестно' : 'Unknown');
 
-                document.getElementById('connection-speed').textContent = await testConnectionSpeed();
+                const speedResult = await testConnectionSpeed();
+                document.getElementById('connection-speed').textContent = speedResult.includes('Мбит/с') ? speedResult : (lang === 'ru' ? speedResult : speedResult.replace('Тест превысил время ожидания (10 секунд)', 'Test timed out (10 seconds)').replace('Не удалось измерить скорость', 'Unable to measure speed'));
 
                 if (data.latitude && data.longitude && mapElement && typeof L !== 'undefined') {
                     if (window.map) {
@@ -265,14 +344,14 @@
                             }).addTo(window.map);
                         });
                         L.marker([data.latitude, data.longitude]).addTo(window.map)
-                            .bindPopup('Ваше местоположение').openPopup();
+                            .bindPopup(lang === 'ru' ? 'Ваше местоположение' : 'Your location').openPopup();
                     } catch (error) {
                         console.error('Ошибка инициализации карты:', error);
-                        if (mapElement) mapElement.innerHTML = '<p>Карта недоступна: ошибка загрузки</p>';
+                        if (mapElement) mapElement.innerHTML = `<p>${lang === 'ru' ? 'Карта недоступна: ошибка загрузки' : 'Map unavailable: loading error'}</p>`;
                     }
                 } else if (mapElement) {
-                    mapElement.innerHTML = '<p>Карта недоступна: ' + 
-                        (typeof L === 'undefined' ? 'библиотека карты не загружена' : 'координаты неизвестны') + '</p>';
+                    mapElement.innerHTML = `<p>${lang === 'ru' ? 'Карта недоступна: ' : 'Map unavailable: '}${
+                        typeof L === 'undefined' ? (lang === 'ru' ? 'библиотека карты не загружена' : 'map library not loaded') : (lang === 'ru' ? 'координаты неизвестны' : 'coordinates unknown')}</p>`;
                 }
 
                 fields.forEach(field => {
@@ -284,15 +363,15 @@
                 fields.forEach(field => {
                     const element = document.getElementById(field);
                     if (element) {
-                        element.textContent = 'Неизвестно';
+                        element.textContent = lang === 'ru' ? 'Неизвестно' : 'Unknown';
                         element.classList.add('loading');
                     }
                 });
                 if (mapElement) {
-                    mapElement.innerHTML = '<p>Карта недоступна</p>';
+                    mapElement.innerHTML = `<p>${lang === 'ru' ? 'Карта недоступна' : 'Map unavailable'}</p>`;
                 }
                 if (errorDiv) {
-                    errorDiv.textContent = 'Не удалось загрузить информацию. Попробуйте позже или проверьте настройки VPN.';
+                    errorDiv.textContent = lang === 'ru' ? 'Не удалось загрузить информацию. Попробуйте позже или проверьте настройки VPN.' : 'Failed to load information. Try again later or check VPN settings.';
                     errorDiv.style.display = 'block';
                 }
             }
@@ -308,17 +387,30 @@
             });
         }
 
-        // Загрузка сохраненной темы
+        // Переключение языка
+        const langToggle = document.getElementById('lang-toggle');
+        if (langToggle) {
+            langToggle.addEventListener('click', () => {
+                const newLang = localStorage.getItem('language') === 'ru' ? 'en' : 'ru';
+                localStorage.setItem('language', newLang);
+                updateLanguage();
+                fetchUserInfo();
+            });
+        }
+
+        // Загрузка сохраненной темы и языка
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-mode');
             if (themeToggle) themeToggle.textContent = '☾';
         }
+        updateLanguage();
 
         // Проверка загрузки Leaflet.js
         if (typeof L === 'undefined') {
             console.error('Leaflet.js не загружен. Проверьте подключение к https://unpkg.com/leaflet@1.9.4/dist/leaflet.js');
             const mapElement = document.getElementById('map');
-            if (mapElement) mapElement.innerHTML = '<p>Карта недоступна: библиотека не загружена</p>';
+            const lang = localStorage.getItem('language') || 'ru';
+            if (mapElement) mapElement.innerHTML = `<p>${lang === 'ru' ? 'Карта недоступна: библиотека не загружена' : 'Map unavailable: library not loaded'}</p>`;
         }
 
         // Запуск функции после загрузки DOM
