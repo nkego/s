@@ -1,3 +1,325 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Поиск региона</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif; }
+    body { min-height: 100vh; } /* Гарантируем, что фон покрывает весь экран */
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-ripple {
+      position: relative;
+      overflow: hidden;
+    }
+    .animate-ripple::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      animation: ripple 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes ripple {
+      to { width: 200%; height: 200%; opacity: 0; }
+    }
+    /* Анимация для кнопки "Начать заново" (разделение и слияние) */
+    .animate-split {
+      animation: split-button 0.3s ease-out forwards;
+    }
+    @keyframes split-button {
+      from { width: 100%; }
+      to { width: calc(50% - 0.25rem); } /* Учитываем gap-2 (0.5rem) */
+    }
+    .animate-merge {
+      animation: merge-button 0.3s ease-out forwards;
+    }
+    @keyframes merge-button {
+      from { width: calc(50% - 0.25rem); }
+      to { width: 100%; }
+    }
+    /* Анимация для кнопки "Далее" */
+    .animate-next-button {
+      animation: fadeInScale 0.3s ease-out forwards;
+    }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.8) translateY(-10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-next-button-exit {
+      animation: fadeOutScale 0.3s ease-out forwards;
+    }
+    @keyframes fadeOutScale {
+      from { opacity: 1; transform: scale(1) translateY(0); }
+      to { opacity: 0; transform: scale(0.8) translateY(-10px); }
+    }
+    .theme-transition {
+      transition: all 0.3s ease;
+    }
+    /* Анимация при наведении на кнопки */
+    .site-link-button:hover, .telegram-link-button:hover, .theme-toggle:hover, .answer-button:hover, .next-button:hover, .clear-button:hover, .reset-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    /* Модальное окно */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 20;
+    }
+    .modal-content {
+      background: #ffffff;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      width: 90%;
+      max-width: 300px;
+    }
+    .theme-sepia .modal-content { background: #f5e9c6; }
+    .dark .modal-content { background: #374151; }
+    .modal-content button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.3s ease;
+    }
+    .dark .modal-content button { color: #e5e7eb; }
+    .theme-sepia .modal-content button { color: #4a3728; }
+    .modal-content button:hover { background: rgba(0, 0, 0, 0.1); }
+    .theme-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .theme-circle.light { background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb); }
+    .theme-circle.dark { background: linear-gradient(to bottom right, #1f2937, #111827); }
+    .theme-circle.sepia { background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3); }
+    /* Светлая тема */
+    body {
+      background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb) fixed;
+    }
+    .theme-light .theme-toggle, .theme-light .site-link-button, .theme-light .telegram-link-button {
+      background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+      color: #374151;
+    }
+    .theme-light .answer-button { background: linear-gradient(to right, #e5e7eb, #d1d5db); color: #374151; }
+    .theme-light .next-button, .theme-light .reset-button { background: linear-gradient(to right, #3b82f6, #6366f1); color: #ffffff; }
+    .theme-light .clear-button { background: transparent; color: #374151; }
+    .theme-light .quiz-question-text { color: #374151; }
+    .theme-light .quiz-score-text { color: #374151; }
+    /* Темная тема */
+    body.dark {
+      background: linear-gradient(to bottom right, #1f2937, #111827) fixed;
+    }
+    .theme-dark .theme-toggle, .theme-dark .site-link-button, .theme-dark .telegram-link-button {
+      background: linear-gradient(to bottom right, #1f2937, #111827);
+      color: #f9fafb; /* Контрастный белый текст */
+    }
+    .theme-dark .input-dark {
+      background-color: #1f2937;
+      color: #f9fafb;
+      border-color: #4b5563;
+    }
+    .theme-dark .title-dark {
+      background: linear-gradient(to right, #e5e7eb, #d1d5db);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .theme-dark .result-text { color: #f9fafb; }
+    .theme-dark .answer-button { background: linear-gradient(to right, #374151, #4b5563); color: #f9fafb; }
+    .theme-dark .next-button, .theme-dark .reset-button { background: linear-gradient(to right, #1e3a8a, #1e40af); color: #f9fafb; }
+    .theme-dark .clear-button { background: transparent; color: #f9fafb; }
+    .theme-dark .quiz-question-text { color: #f9fafb; }
+    .theme-dark .quiz-score-text { color: #f9fafb; }
+    /* Сепия-тема */
+    body.theme-sepia {
+      background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3) fixed;
+    }
+    .theme-sepia .theme-toggle, .theme-sepia .site-link-button, .theme-sepia .telegram-link-button {
+      background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3);
+      color: #4a3728;
+    }
+    .theme-sepia .input-dark { background-color: #f9f0d8; border-color: #d9c8a6; color: #4a3728; }
+    .theme-sepia .text-red-500 { color: #a94438; }
+    .theme-sepia .text-black { color: #4a3728; }
+    .theme-sepia .title-dark { color: #4a3728; }
+    .theme-sepia .result-text { color: #4a3728; }
+    .theme-sepia .answer-button { background: linear-gradient(to right, #f9f0d8, #e2d4b7); color: #4a3728; }
+    .theme-sepia .next-button, .theme-sepia .reset-button { background: linear-gradient(to right, #d4a276, #b68a5e); color: #4a3728; }
+    .theme-sepia .clear-button { background: transparent; color: #4a3728; }
+    .theme-sepia .quiz-question-text { color: #4a3728; }
+    .theme-sepia .quiz-score-text { color: #4a3728; }
+    /* Стили для викторины */
+    .answer-button.correct { background: #22c55e !important; color: #ffffff !important; }
+    .answer-button.incorrect { background: #ef4444 !important; color: #ffffff !important; }
+    /* Стили для кнопки очистки */
+    .input-container { position: relative; }
+    .clear-button {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+    }
+    .input-container input:not(:placeholder-shown) + .clear-button {
+      display: block;
+    }
+    /* Стили для блока счётчика */
+    .score-block {
+      background: #f3f4f6;
+    }
+    .dark .score-block { background: #374151; }
+    .theme-sepia .score-block { background: #f9f0d8; }
+  </style>
+</head>
+<body class="theme-transition min-h-screen flex flex-col items-center justify-center p-4">
+  <div class="fixed top-4 left-4 z-10">
+    <button id="site-link" class="px-4 py-2 rounded-md site-link-button theme-transition shadow-md animate-ripple" aria-label="Перейти на сайт">
+      Страны
+    </button>
+  </div>
+  <div class="fixed bottom-4 right-4 z-10">
+    <button id="telegram-link" class="p-3 rounded-full telegram-link-button theme-transition shadow-md animate-ripple" aria-label="Telegram автора">
+      Автор
+    </button>
+  </div>
+  <div class="flex items-center justify-start mb-6 w-full max-w-xs">
+    <h1 class="text-3xl font-semibold text-black title-dark">
+      Поиск региона
+    </h1>
+    <button id="theme-toggle" class="ml-4 p-2 rounded-full text-gray-800 dark:text-gray-200 theme-toggle theme-transition shadow-md" aria-label="Выбрать тему">
+      <span class="text-xl">🎨</span>
+    </button>
+  </div>
+  <div id="theme-modal" class="modal">
+    <div class="modal-content">
+      <button onclick="setTheme('light')">
+        Светлая <span class="theme-circle light"></span>
+      </button>
+      <button onclick="setTheme('dark')">
+        Темная <span class="theme-circle dark"></span>
+      </button>
+      <button onclick="setTheme('sepia')">
+        Сепия <span class="theme-circle sepia"></span>
+      </button>
+    </div>
+  </div>
+  <div class="w-full max-w-xs mb-6 text-left">
+    <div class="input-container">
+      <input
+        id="region-code"
+        type="tel"
+        inputmode="numeric"
+        placeholder="Введите код региона (1-799)"
+        class="w-full p-3 border rounded-lg input-dark focus:outline-none focus:ring-2 focus:ring-blue-400 theme-transition"
+      >
+      <button id="clear-input" class="clear-button theme-transition animate-ripple">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <p id="search-result" class="mt-4 text-center text-xl font-medium text-gray-800 result-text hidden animate-fade-in"></p>
+    <p id="search-error" class="mt-4 text-center text-red-500 dark:text-red-400 hidden animate-fade-in"></p>
+  </div>
+  <div class="w-full max-w-xs text-left">
+    <p id="quiz-question" class="text-left text-2xl font-semibold mb-4 quiz-question-text"></p>
+    <div id="quiz-answers" class="flex flex-col gap-2">
+      <button id="answer1" class="p-3 rounded-lg answer-button theme-transition animate-ripple"></button>
+      <button id="answer2" class="p-3 rounded-lg answer-button theme-transition animate-ripple"></button>
+    </div>
+    <div id="quiz-score" class="flex justify-center gap-4 mt-4 score-block p-3 rounded-lg">
+      <div>
+        <span class="text-lg font-medium quiz-score-text">Верно:</span>
+        <span id="correct-count" class="text-lg font-medium quiz-score-text">0</span>
+      </div>
+      <div>
+        <span class="text-lg font-medium quiz-score-text">Неверно:</span>
+        <span id="incorrect-count" class="text-lg font-medium quiz-score-text">0</span>
+      </div>
+    </div>
+    <div class="flex gap-2 mt-4">
+      <button id="next-button" class="w-1/2 p-3 rounded-lg next-button theme-transition animate-ripple hidden">
+        Далее
+      </button>
+      <button id="reset-score" class="w-full p-3 rounded-lg reset-button theme-transition animate-ripple">
+        Начать заново
+      </button>
+    </div>
+  </div>
+<script>
+  // Объект регионов
   const regions = {
       "01": "Республика Адыгея",
       "02": "Республика Башкортостан",
@@ -122,3 +444,239 @@
       "777": "Москва",
       "799": "Москва",
     };
+
+  // Элементы DOM
+  const input = document.getElementById('region-code');
+  const clearInput = document.getElementById('clear-input');
+  const searchResult = document.getElementById('search-result');
+  const searchError = document.getElementById('search-error');
+  const quizQuestion = document.getElementById('quiz-question');
+  const answer1 = document.getElementById('answer1');
+  const answer2 = document.getElementById('answer2');
+  const quizScore = document.getElementById('quiz-score');
+  const correctCount = document.getElementById('correct-count');
+  const incorrectCount = document.getElementById('incorrect-count');
+  const nextButton = document.getElementById('next-button');
+  const resetScore = document.getElementById('reset-score');
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeModal = document.getElementById('theme-modal');
+  const siteLink = document.getElementById('site-link');
+  const telegramLink = document.getElementById('telegram-link');
+
+  // Управление темами
+  const themes = ['light', 'dark', 'sepia'];
+  let currentTheme = localStorage.getItem('theme') || 'light';
+
+  function applyTheme(theme) {
+    document.body.classList.remove('dark', 'theme-sepia', 'theme-light', 'theme-dark', 'theme-sepia');
+    document.body.classList.add(`theme-${theme}`);
+    if (theme === 'dark') {
+      document.body.classList.add('dark');
+    } else if (theme === 'sepia') {
+      document.body.classList.add('theme-sepia');
+    }
+    localStorage.setItem('theme', theme);
+    console.log('Текущая тема:', theme);
+    console.log('Классы body:', document.body.className);
+  }
+
+  function setTheme(theme) {
+    currentTheme = theme;
+    applyTheme(theme);
+    themeModal.style.display = 'none';
+  }
+
+  applyTheme(currentTheme);
+
+  themeToggle.addEventListener('click', () => {
+    themeModal.style.display = 'block';
+  });
+
+  window.addEventListener('click', (e) => {
+    if (e.target === themeModal) {
+      themeModal.style.display = 'none';
+    }
+  });
+
+  siteLink.addEventListener('click', () => {
+    window.open('https://nkego.github.io/s/x.html', '_blank');
+  });
+
+  telegramLink.addEventListener('click', () => {
+    window.open('https://t.me/nkego', '_blank');
+  });
+
+  // Функция debounce
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Поиск по вводу
+  const performSearch = () => {
+    const code = input.value.trim();
+    if (code && regions[code]) {
+      searchResult.textContent = `Регион: ${regions[code]}`;
+      searchResult.classList.remove('hidden');
+      searchResult.classList.add('animate-fade-in');
+      searchError.classList.add('hidden');
+    } else if (code) {
+      searchError.textContent = 'не найден((';
+      searchError.classList.remove('hidden');
+      searchError.classList.add('animate-fade-in');
+      searchResult.classList.add('hidden');
+    } else {
+      searchResult.classList.add('hidden');
+      searchError.classList.add('hidden');
+    }
+    clearInput.style.display = code ? 'block' : 'none';
+  };
+
+  const debouncedSearch = debounce(performSearch, 500);
+
+  input.addEventListener('input', () => {
+    const value = input.value.replace(/\D/g, '');
+    if (value.length <= 3) {
+      input.value = value;
+      debouncedSearch();
+    }
+  });
+
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      performSearch();
+    }
+  });
+
+  clearInput.addEventListener('click', () => {
+    input.value = '';
+    searchResult.classList.add('hidden');
+    searchError.classList.add('hidden');
+    clearInput.style.display = 'none';
+  });
+
+  // Викторина
+  let currentRegionCode = '';
+  let correctRegion = '';
+  let correctAnswers = 0;
+  let incorrectAnswers = 0;
+
+  function updateScore() {
+    correctCount.textContent = correctAnswers;
+    incorrectCount.textContent = incorrectAnswers;
+  }
+
+  function generateQuiz() {
+    // Сбрасываем предыдущее состояние кнопок
+    answer1.classList.remove('correct', 'incorrect');
+    answer2.classList.remove('correct', 'incorrect');
+    if (!nextButton.classList.contains('hidden')) {
+      nextButton.classList.add('animate-next-button-exit');
+      resetScore.classList.add('animate-merge');
+      setTimeout(() => {
+        nextButton.classList.add('hidden');
+        nextButton.classList.remove('animate-next-button-exit');
+        resetScore.classList.remove('animate-merge');
+        resetScore.classList.remove('animate-split');
+      }, 300);
+    }
+    answer1.disabled = false;
+    answer2.disabled = false;
+
+    // Выбираем случайный код региона
+    const regionCodes = Object.keys(regions);
+    currentRegionCode = regionCodes[Math.floor(Math.random() * regionCodes.length)];
+    correctRegion = regions[currentRegionCode];
+
+    // Выбираем случайный неправильный регион
+    let wrongRegion = correctRegion;
+    while (wrongRegion === correctRegion) {
+      wrongRegion = regions[regionCodes[Math.floor(Math.random() * regionCodes.length)]];
+    }
+
+    // Перемешиваем варианты ответа
+    const answers = [correctRegion, wrongRegion];
+    const shuffledAnswers = answers.sort(() => Math.random() - 0.5);
+
+    quizQuestion.textContent = `Код региона: ${currentRegionCode}`;
+    quizQuestion.classList.add('animate-fade-in');
+    answer1.textContent = shuffledAnswers[0];
+    answer2.textContent = shuffledAnswers[1];
+    answer1.classList.add('animate-fade-in');
+    answer2.classList.add('animate-fade-in');
+    updateScore();
+  }
+
+  function checkAnswer(selectedRegion, button) {
+    answer1.disabled = true;
+    answer2.disabled = true;
+    if (selectedRegion === correctRegion) {
+      button.classList.add('correct');
+      correctAnswers++;
+    } else {
+      button.classList.add('incorrect');
+      incorrectAnswers++;
+      if (answer1.textContent === correctRegion) {
+        answer1.classList.add('correct');
+      } else {
+        answer2.classList.add('correct');
+      }
+    }
+    updateScore();
+    nextButton.classList.remove('hidden');
+    nextButton.classList.add('animate-next-button');
+    resetScore.classList.add('animate-split');
+  }
+
+  function resetQuiz() {
+    correctAnswers = 0;
+    incorrectAnswers = 0;
+    updateScore();
+    generateQuiz();
+  }
+
+  answer1.addEventListener('click', () => checkAnswer(answer1.textContent, answer1));
+  answer2.addEventListener('click', () => checkAnswer(answer2.textContent, answer2));
+  nextButton.addEventListener('click', generateQuiz);
+  resetScore.addEventListener('click', resetQuiz);
+
+  // Анимация ripple для кнопок
+  function addRippleEffect(button) {
+    button.addEventListener('click', (e) => {
+      const rect = button.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'absolute bg-white opacity-30 rounded-full';
+      const size = Math.max(rect.width, rect.height);
+      ripple.style.width = ripple.style.height = `${size}px`;
+      ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+      ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+      ripple.style.transform = 'scale(0)';
+      ripple.animate(
+        { transform: 'scale(4)', opacity: 0 },
+        { duration: 600, easing: 'ease-out' }
+      );
+      button.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    });
+  }
+
+  addRippleEffect(siteLink);
+  addRippleEffect(telegramLink);
+  addRippleEffect(answer1);
+  addRippleEffect(answer2);
+  addRippleEffect(nextButton);
+  addRippleEffect(clearInput);
+  addRippleEffect(resetScore);
+
+  // Инициализация викторины
+  generateQuiz();
+</script>
+</body>
+</html>
