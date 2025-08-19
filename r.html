@@ -75,11 +75,41 @@
     @keyframes ripple {
       to { width: 200%; height: 200%; opacity: 0; }
     }
+    /* Анимация для кнопки "Начать заново" (разделение и слияние) */
+    .animate-split {
+      animation: split-button 0.3s ease-out forwards;
+    }
+    @keyframes split-button {
+      from { width: 100%; }
+      to { width: calc(50% - 0.25rem); } /* Учитываем gap-2 (0.5rem) */
+    }
+    .animate-merge {
+      animation: merge-button 0.3s ease-out forwards;
+    }
+    @keyframes merge-button {
+      from { width: calc(50% - 0.25rem); }
+      to { width: 100%; }
+    }
+    /* Анимация для кнопки "Далее" */
+    .animate-next-button {
+      animation: fadeInScale 0.3s ease-out forwards;
+    }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.8) translateY(-10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-next-button-exit {
+      animation: fadeOutScale 0.3s ease-out forwards;
+    }
+    @keyframes fadeOutScale {
+      from { opacity: 1; transform: scale(1) translateY(0); }
+      to { opacity: 0; transform: scale(0.8) translateY(-10px); }
+    }
     .theme-transition {
       transition: all 0.3s ease;
     }
     /* Анимация при наведении на кнопки */
-    .site-link-button:hover, .telegram-link-button:hover, .theme-toggle:hover {
+    .site-link-button:hover, .telegram-link-button:hover, .theme-toggle:hover, .answer-button:hover, .next-button:hover, .clear-button:hover, .reset-button:hover {
       transform: scale(1.05);
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
@@ -142,32 +172,36 @@
       background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
       color: #374151;
     }
+    .theme-light .answer-button { background: linear-gradient(to right, #e5e7eb, #d1d5db); color: #374151; }
+    .theme-light .next-button, .theme-light .reset-button { background: linear-gradient(to right, #3b82f6, #6366f1); color: #ffffff; }
+    .theme-light .clear-button { background: transparent; color: #374151; }
+    .theme-light .quiz-question-text { color: #374151; }
+    .theme-light .quiz-score-text { color: #374151; }
     /* Темная тема */
     body.dark {
       background: linear-gradient(to bottom right, #1f2937, #111827) fixed;
     }
     .theme-dark .theme-toggle, .theme-dark .site-link-button, .theme-dark .telegram-link-button {
       background: linear-gradient(to bottom right, #1f2937, #111827);
-      color: #f9fafb; /* Контрастный белый текст для видимости в тёмной теме */
+      color: #f9fafb; /* Контрастный белый текст */
     }
-    body.dark .input-dark {
+    .theme-dark .input-dark {
       background-color: #1f2937;
       color: #f9fafb;
       border-color: #4b5563;
     }
-    body.dark .button-dark {
-      background: linear-gradient(to right, #1e3a8a, #1e40af);
-    }
-    body.dark .button-dark:hover {
-      background: linear-gradient(to right, #1e40af, #1e3a8a);
-    }
-    body.dark .title-dark {
+    .theme-dark .title-dark {
       background: linear-gradient(to right, #e5e7eb, #d1d5db);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
     }
-    body.dark .result-text { color: #f9fafb; }
+    .theme-dark .result-text { color: #f9fafb; }
+    .theme-dark .answer-button { background: linear-gradient(to right, #374151, #4b5563); color: #f9fafb; }
+    .theme-dark .next-button, .theme-dark .reset-button { background: linear-gradient(to right, #1e3a8a, #1e40af); color: #f9fafb; }
+    .theme-dark .clear-button { background: transparent; color: #f9fafb; }
+    .theme-dark .quiz-question-text { color: #f9fafb; }
+    .theme-dark .quiz-score-text { color: #f9fafb; }
     /* Сепия-тема */
     body.theme-sepia {
       background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3) fixed;
@@ -178,12 +212,29 @@
     }
     .theme-sepia .input-dark { background-color: #f9f0d8; border-color: #d9c8a6; color: #4a3728; }
     .theme-sepia .text-red-500 { color: #a94438; }
-    .theme-sepia .button-dark { background: linear-gradient(to right, #d4a276, #b68a5e); }
-    .theme-sepia .button-dark:hover { background: linear-gradient(to right, #c49368, #a77b54); }
-    .theme-sepia .focus\:ring-blue-400 { --tw-ring-color: #a77b54; }
     .theme-sepia .text-black { color: #4a3728; }
     .theme-sepia .title-dark { color: #4a3728; }
     .theme-sepia .result-text { color: #4a3728; }
+    .theme-sepia .answer-button { background: linear-gradient(to right, #f9f0d8, #e2d4b7); color: #4a3728; }
+    .theme-sepia .next-button, .theme-sepia .reset-button { background: linear-gradient(to right, #d4a276, #b68a5e); color: #4a3728; }
+    .theme-sepia .clear-button { background: transparent; color: #4a3728; }
+    .theme-sepia .quiz-question-text { color: #4a3728; }
+    .theme-sepia .quiz-score-text { color: #4a3728; }
+    /* Стили для викторины */
+    .answer-button.correct { background: #22c55e !important; color: #ffffff !important; }
+    .answer-button.incorrect { background: #ef4444 !important; color: #ffffff !important; }
+    /* Стили для кнопки очистки */
+    .input-container { position: relative; }
+    .clear-button {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+    }
+    .input-container input:not(:placeholder-shown) + .clear-button {
+      display: block;
+    }
   </style>
 </head>
 <body class="theme-transition min-h-screen flex flex-col items-center justify-center p-4">
@@ -193,7 +244,7 @@
     </button>
   </div>
   <div class="fixed bottom-4 right-4 z-10">
-    <button id="telegram-link" class="p-3 rounded-full telegram-link-button theme-transition shadow-md animate-ripple" aria-label="Автор">
+    <button id="telegram-link" class="p-3 rounded-full telegram-link-button theme-transition shadow-md animate-ripple" aria-label="Telegram автора">
       Автор
     </button>
   </div>
@@ -218,23 +269,42 @@
       </button>
     </div>
   </div>
-  <input
-    id="region-code"
-    type="tel"
-    inputmode="numeric"
-    placeholder="Введите код региона (1-799)"
-    class="w-full max-w-xs p-3 border rounded-lg input-dark focus:outline-none focus:ring-2 focus:ring-blue-400 theme-transition"
-  >
-  <button
-    id="search-button"
-    class="mt-4 w-full max-w-xs p-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-600 button-dark focus:ring-2 focus:ring-blue-400 theme-transition animate-ripple"
-  >
-    Найти регион
-  </button>
-  <p id="result" class="mt-6 text-center text-xl font-medium text-gray-800 result-text hidden animate-fade-in"></p>
-  <p id="error" class="mt-6 text-center text-red-500 dark:text-red-400 hidden animate-fade-in"></p>
+  <div class="w-full max-w-xs mb-6">
+    <div class="input-container">
+      <input
+        id="region-code"
+        type="tel"
+        inputmode="numeric"
+        placeholder="Введите код региона (1-799)"
+        class="w-full p-3 border rounded-lg input-dark focus:outline-none focus:ring-2 focus:ring-blue-400 theme-transition"
+      >
+      <button id="clear-input" class="clear-button theme-transition animate-ripple">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <p id="search-result" class="mt-4 text-center text-xl font-medium text-gray-800 result-text hidden animate-fade-in"></p>
+    <p id="search-error" class="mt-4 text-center text-red-500 dark:text-red-400 hidden animate-fade-in"></p>
+  </div>
+  <div class="w-full max-w-xs">
+    <p id="quiz-question" class="text-center text-2xl font-semibold mb-4 quiz-question-text"></p>
+    <div id="quiz-answers" class="flex flex-col gap-2">
+      <button id="answer1" class="p-3 rounded-lg answer-button theme-transition animate-ripple"></button>
+      <button id="answer2" class="p-3 rounded-lg answer-button theme-transition animate-ripple"></button>
+    </div>
+    <p id="quiz-score" class="mt-4 text-center text-lg font-medium quiz-score-text"></p>
+    <div class="flex gap-2 mt-4">
+      <button id="next-button" class="w-1/2 p-3 rounded-lg next-button theme-transition animate-ripple hidden">
+        Далее
+      </button>
+      <button id="reset-score" class="w-full p-3 rounded-lg reset-button theme-transition animate-ripple">
+        Начать заново
+      </button>
+    </div>
+  </div>
 <script>
-  // Объект регионов 
+  // Объект регионов
   const regions = {
       "01": "Республика Адыгея",
       "02": "Республика Башкортостан",
@@ -362,9 +432,15 @@
 
   // Элементы DOM
   const input = document.getElementById('region-code');
-  const button = document.getElementById('search-button');
-  const result = document.getElementById('result');
-  const error = document.getElementById('error');
+  const clearInput = document.getElementById('clear-input');
+  const searchResult = document.getElementById('search-result');
+  const searchError = document.getElementById('search-error');
+  const quizQuestion = document.getElementById('quiz-question');
+  const answer1 = document.getElementById('answer1');
+  const answer2 = document.getElementById('answer2');
+  const quizScore = document.getElementById('quiz-score');
+  const nextButton = document.getElementById('next-button');
+  const resetScore = document.getElementById('reset-score');
   const themeToggle = document.getElementById('theme-toggle');
   const themeModal = document.getElementById('theme-modal');
   const siteLink = document.getElementById('site-link');
@@ -375,140 +451,214 @@
   let currentTheme = localStorage.getItem('theme') || 'light';
 
   function applyTheme(theme) {
-    // Удаляем все классы тем
     document.body.classList.remove('dark', 'theme-sepia', 'theme-light', 'theme-dark', 'theme-sepia');
-    // Добавляем текущую тему как класс для отладки
     document.body.classList.add(`theme-${theme}`);
-    // Добавляем нужный класс темы
     if (theme === 'dark') {
       document.body.classList.add('dark');
     } else if (theme === 'sepia') {
       document.body.classList.add('theme-sepia');
     }
     localStorage.setItem('theme', theme);
-    // Отладка: логируем текущую тему и классы body
     console.log('Текущая тема:', theme);
     console.log('Классы body:', document.body.className);
   }
 
-  // Установка темы
   function setTheme(theme) {
     currentTheme = theme;
     applyTheme(theme);
     themeModal.style.display = 'none';
   }
 
-  // Применяем начальную тему
   applyTheme(currentTheme);
 
-  // Открытие/закрытие модального окна
   themeToggle.addEventListener('click', () => {
     themeModal.style.display = 'block';
   });
 
-  // Закрытие модального окна при клике вне
   window.addEventListener('click', (e) => {
     if (e.target === themeModal) {
       themeModal.style.display = 'none';
     }
   });
 
-  // Переход на новый сайт
   siteLink.addEventListener('click', () => {
     window.open('https://nkego.github.io/s/x.html', '_blank');
   });
 
-  // Переход на Telegram автора
   telegramLink.addEventListener('click', () => {
     window.open('https://t.me/nkego', '_blank');
   });
 
-  // Обработка ввода
+  // Функция debounce
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Поиск по вводу
+  const performSearch = () => {
+    const code = input.value.trim();
+    if (code && regions[code]) {
+      searchResult.textContent = `Регион: ${regions[code]}`;
+      searchResult.classList.remove('hidden');
+      searchResult.classList.add('animate-fade-in');
+      searchError.classList.add('hidden');
+    } else if (code) {
+      searchError.textContent = 'не найден';
+      searchError.classList.remove('hidden');
+      searchError.classList.add('animate-fade-in');
+      searchResult.classList.add('hidden');
+    } else {
+      searchResult.classList.add('hidden');
+      searchError.classList.add('hidden');
+    }
+    clearInput.style.display = code ? 'block' : 'none';
+  };
+
+  const debouncedSearch = debounce(performSearch, 500);
+
   input.addEventListener('input', () => {
     const value = input.value.replace(/\D/g, '');
     if (value.length <= 3) {
       input.value = value;
-      result.classList.add('hidden');
-      error.classList.add('hidden');
+      debouncedSearch();
     }
   });
 
-  // Обработка поиска
-  button.addEventListener('click', () => {
-    const code = input.value.trim();
-    if (code && regions[code]) {
-      result.textContent = `Регион: ${regions[code]}`;
-      result.classList.remove('hidden');
-      result.classList.add('animate-fade-in');
-      error.classList.add('hidden');
-    } else {
-      error.textContent = 'Неверный код региона';
-      error.classList.remove('hidden');
-      error.classList.add('animate-fade-in');
-      result.classList.add('hidden');
-    }
-  });
-
-  // Поддержка Enter
   input.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
-      button.click();
+      performSearch();
     }
   });
 
-  // Анимация ripple для кнопки поиска
-  button.addEventListener('click', (e) => {
-    const rect = button.getBoundingClientRect();
-    const ripple = document.createElement('span');
-    ripple.className = 'absolute bg-white opacity-30 rounded-full';
-    const size = Math.max(rect.width, rect.height);
-    ripple.style.width = ripple.style.height = `${size}px`;
-    ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
-    ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
-    ripple.style.transform = 'scale(0)';
-    ripple.animate(
-      { transform: 'scale(4)', opacity: 0 },
-      { duration: 600, easing: 'ease-out' }
-    );
-    button.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
+  clearInput.addEventListener('click', () => {
+    input.value = '';
+    searchResult.classList.add('hidden');
+    searchError.classList.add('hidden');
+    clearInput.style.display = 'none';
   });
 
-  // Анимация ripple для кнопки перехода на сайт
-  siteLink.addEventListener('click', (e) => {
-    const rect = siteLink.getBoundingClientRect();
-    const ripple = document.createElement('span');
-    ripple.className = 'absolute bg-white opacity-30 rounded-full';
-    const size = Math.max(rect.width, rect.height);
-    ripple.style.width = ripple.style.height = `${size}px`;
-    ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
-    ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
-    ripple.style.transform = 'scale(0)';
-    ripple.animate(
-      { transform: 'scale(4)', opacity: 0 },
-      { duration: 600, easing: 'ease-out' }
-    );
-    siteLink.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
-  });
+  // Викторина
+  let currentRegionCode = '';
+  let correctRegion = '';
+  let correctAnswers = 0;
+  let incorrectAnswers = 0;
 
-  // Анимация ripple для кнопки Telegram
-  telegramLink.addEventListener('click', (e) => {
-    const rect = telegramLink.getBoundingClientRect();
-    const ripple = document.createElement('span');
-    ripple.className = 'absolute bg-white opacity-30 rounded-full';
-    const size = Math.max(rect.width, rect.height);
-    ripple.style.width = ripple.style.height = `${size}px`;
-    ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
-    ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
-    ripple.style.transform = 'scale(0)';
-    ripple.animate(
-      { transform: 'scale(4)', opacity: 0 },
-      { duration: 600, easing: 'ease-out' }
-    );
-    telegramLink.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
-  });
+  function updateScore() {
+    quizScore.textContent = `Правильных: ${correctAnswers}, Неправильных: ${incorrectAnswers}`;
+  }
+
+  function generateQuiz() {
+    // Сбрасываем предыдущее состояние кнопок
+    answer1.classList.remove('correct', 'incorrect');
+    answer2.classList.remove('correct', 'incorrect');
+    if (!nextButton.classList.contains('hidden')) {
+      nextButton.classList.add('animate-next-button-exit');
+      resetScore.classList.add('animate-merge');
+      setTimeout(() => {
+        nextButton.classList.add('hidden');
+        nextButton.classList.remove('animate-next-button-exit');
+        resetScore.classList.remove('animate-merge');
+        resetScore.classList.remove('animate-split');
+      }, 300);
+    }
+    answer1.disabled = false;
+    answer2.disabled = false;
+
+    // Выбираем случайный код региона
+    const regionCodes = Object.keys(regions);
+    currentRegionCode = regionCodes[Math.floor(Math.random() * regionCodes.length)];
+    correctRegion = regions[currentRegionCode];
+
+    // Выбираем случайный неправильный регион
+    let wrongRegion = correctRegion;
+    while (wrongRegion === correctRegion) {
+      wrongRegion = regions[regionCodes[Math.floor(Math.random() * regionCodes.length)]];
+    }
+
+    // Перемешиваем варианты ответа
+    const answers = [correctRegion, wrongRegion];
+    const shuffledAnswers = answers.sort(() => Math.random() - 0.5);
+
+    quizQuestion.textContent = `Код региона: ${currentRegionCode}`;
+    quizQuestion.classList.add('animate-fade-in');
+    answer1.textContent = shuffledAnswers[0];
+    answer2.textContent = shuffledAnswers[1];
+    answer1.classList.add('animate-fade-in');
+    answer2.classList.add('animate-fade-in');
+    updateScore();
+  }
+
+  function checkAnswer(selectedRegion, button) {
+    answer1.disabled = true;
+    answer2.disabled = true;
+    if (selectedRegion === correctRegion) {
+      button.classList.add('correct');
+      correctAnswers++;
+    } else {
+      button.classList.add('incorrect');
+      incorrectAnswers++;
+      if (answer1.textContent === correctRegion) {
+        answer1.classList.add('correct');
+      } else {
+        answer2.classList.add('correct');
+      }
+    }
+    updateScore();
+    nextButton.classList.remove('hidden');
+    nextButton.classList.add('animate-next-button');
+    resetScore.classList.add('animate-split');
+  }
+
+  function resetQuiz() {
+    correctAnswers = 0;
+    incorrectAnswers = 0;
+    updateScore();
+    generateQuiz();
+  }
+
+  answer1.addEventListener('click', () => checkAnswer(answer1.textContent, answer1));
+  answer2.addEventListener('click', () => checkAnswer(answer2.textContent, answer2));
+  nextButton.addEventListener('click', generateQuiz);
+  resetScore.addEventListener('click', resetQuiz);
+
+  // Анимация ripple для кнопок
+  function addRippleEffect(button) {
+    button.addEventListener('click', (e) => {
+      const rect = button.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'absolute bg-white opacity-30 rounded-full';
+      const size = Math.max(rect.width, rect.height);
+      ripple.style.width = ripple.style.height = `${size}px`;
+      ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+      ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+      ripple.style.transform = 'scale(0)';
+      ripple.animate(
+        { transform: 'scale(4)', opacity: 0 },
+        { duration: 600, easing: 'ease-out' }
+      );
+      button.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+    });
+  }
+
+  addRippleEffect(siteLink);
+  addRippleEffect(telegramLink);
+  addRippleEffect(answer1);
+  addRippleEffect(answer2);
+  addRippleEffect(nextButton);
+  addRippleEffect(clearInput);
+  addRippleEffect(resetScore);
+
+  // Инициализация викторины
+  generateQuiz();
 </script>
 </body>
 </html>
