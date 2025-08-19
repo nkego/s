@@ -161,27 +161,23 @@
         .site-button {
             position: fixed;
             top: 20px;
+            left: 50%;
+            transform: translateX(-50%); /* Центрирование */
             font-size: 14px;
             cursor: pointer;
             background-color: #f5f5f5;
-            color: #1a1a1a; /* Темный текст в светлой теме */
+            color: #1a1a1a;
             border: none;
             border-radius: 4px;
             padding: 8px 16px;
             transition: background-color 0.3s ease;
-        }
-        #site-button-1 {
-            left: 20px;
-        }
-        #site-button-2 {
-            left: 120px;
         }
         .site-button:hover {
             background-color: #e0e0e0;
         }
         body.dark-mode .site-button {
             background-color: #1a1a1a;
-            color: #ffffff; /* Белый текст в темной теме */
+            color: #ffffff;
         }
         body.dark-mode .site-button:hover {
             background-color: #333333;
@@ -194,7 +190,7 @@
             font-size: 14px;
             cursor: pointer;
             background-color: #f5f5f5;
-            color: #1a1a1a; /* Темный текст в светлой теме */
+            color: #1a1a1a;
             border: none;
             border-radius: 20px;
             transition: background-color 0.3s ease;
@@ -204,7 +200,7 @@
         }
         body.dark-mode #telegram-button {
             background-color: #1a1a1a;
-            color: #ffffff; /* Белый текст в темной теме */
+            color: #ffffff;
         }
         body.dark-mode #telegram-button:hover {
             background-color: #333333;
@@ -214,9 +210,8 @@
 <body>
     <button id="lang-toggle" title="Switch language">⭕</button>
     <button id="theme-toggle" title="Switch theme">☼</button>
-    <button class="site-button" id="site-button-1" onclick="window.open('https://nkego.github.io/s/x.html', '_blank')">Страны</button>
-    <button class="site-button" id="site-button-2" onclick="window.open('https://nkego.github.io/s/r.html', '_blank')">Регионы</button>
-    <button id="telegram-button" onclick="window.open('https://t.me/nkego', '_blank')">Автор</button>
+    <button class="site-button" id="site-button-1" onclick="window.open('https://nkego.github.io/s/x.html', '_blank')">На главную</button>
+    <button id="telegram-button" onclick="window.open('https://t.me/nkego', '_blank')">Author</button>
     <div class="info-section">
         <h1 data-lang-ru="Информация о подключении" data-lang-en="Connection Information">Информация о подключении</h1>
         <div class="info"><span class="label" data-lang-ru="IP-адрес:" data-lang-en="IP Address:">IP-адрес:</span> <span class="value" id="ip-address">Загрузка...</span></div>
@@ -237,7 +232,7 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const API_KEY = 'YOUR_IPGEOLOCATION_IO_API_KEY'; // Замените на ваш API-ключ от ipgeolocation.io
+        const API_KEY = 'IPGEOLOCATION_IO_API_KEY'; // Заменить на API-ключ от ipgeolocation.io
 
         async function testConnectionSpeed() {
             const testImage = 'https://stamen-tiles-a.a.ssl.fastly.net/terrain/1/0/0.jpg';
