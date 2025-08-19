@@ -47,6 +47,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; font-family: system-ui, -apple-system, sans-serif; }
+    body { min-height: 100vh; } /* Гарантируем, что фон покрывает весь экран */
     .animate-fade-in {
       animation: fadeIn 0.5s ease-out;
     }
@@ -76,6 +77,11 @@
     }
     .theme-transition {
       transition: all 0.3s ease;
+    }
+    /* Анимация при наведении на кнопки */
+    .site-link-button:hover, .telegram-link-button:hover, .theme-toggle:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
     /* Модальное окно */
     .modal {
@@ -130,17 +136,19 @@
     .theme-circle.sepia { background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3); }
     /* Светлая тема */
     body {
-      background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+      background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb) fixed;
     }
     .theme-light .theme-toggle, .theme-light .site-link-button, .theme-light .telegram-link-button {
       background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
+      color: #374151;
     }
     /* Темная тема */
     body.dark {
-      background: linear-gradient(to bottom right, #1f2937, #111827);
+      background: linear-gradient(to bottom right, #1f2937, #111827) fixed;
     }
     .theme-dark .theme-toggle, .theme-dark .site-link-button, .theme-dark .telegram-link-button {
       background: linear-gradient(to bottom right, #1f2937, #111827);
+      color: #f9fafb; /* Контрастный белый текст для видимости в тёмной теме */
     }
     body.dark .input-dark {
       background-color: #1f2937;
@@ -162,10 +170,11 @@
     body.dark .result-text { color: #f9fafb; }
     /* Сепия-тема */
     body.theme-sepia {
-      background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3);
+      background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3) fixed;
     }
     .theme-sepia .theme-toggle, .theme-sepia .site-link-button, .theme-sepia .telegram-link-button {
       background: linear-gradient(to bottom right, #f4e8c1, #e6d3a3);
+      color: #4a3728;
     }
     .theme-sepia .input-dark { background-color: #f9f0d8; border-color: #d9c8a6; color: #4a3728; }
     .theme-sepia .text-red-500 { color: #a94438; }
@@ -179,13 +188,13 @@
 </head>
 <body class="theme-transition min-h-screen flex flex-col items-center justify-center p-4">
   <div class="fixed top-4 left-4 z-10">
-    <button id="site-link" class="p-2 rounded-full site-link-button theme-transition shadow-md animate-ripple" aria-label="Перейти на сайт">
-      <span class="text-xl">страны</span>
+    <button id="site-link" class="px-4 py-2 rounded-md site-link-button theme-transition shadow-md animate-ripple" aria-label="Перейти на сайт">
+      Страны
     </button>
   </div>
   <div class="fixed bottom-4 right-4 z-10">
-    <button id="telegram-link" class="p-2 rounded-full telegram-link-button theme-transition shadow-md animate-ripple" aria-label="Telegram автора">
-      <span class="text-xl">Автор</span>
+    <button id="telegram-link" class="p-3 rounded-full telegram-link-button theme-transition shadow-md animate-ripple" aria-label="Автор">
+      Автор
     </button>
   </div>
   <div class="flex items-center justify-center mb-6">
@@ -211,7 +220,8 @@
   </div>
   <input
     id="region-code"
-    type="text"
+    type="tel"
+    inputmode="numeric"
     placeholder="Введите код региона (1-799)"
     class="w-full max-w-xs p-3 border rounded-lg input-dark focus:outline-none focus:ring-2 focus:ring-blue-400 theme-transition"
   >
@@ -224,7 +234,7 @@
   <p id="result" class="mt-6 text-center text-xl font-medium text-gray-800 result-text hidden animate-fade-in"></p>
   <p id="error" class="mt-6 text-center text-red-500 dark:text-red-400 hidden animate-fade-in"></p>
 <script>
-  // Объект регионов для заполнения пользователем
+  // Объект регионов 
   const regions = {
       "01": "Республика Адыгея",
       "02": "Республика Башкортостан",
