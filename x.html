@@ -302,15 +302,16 @@
       color: var(--error-text);
       animation: shake 0.5s ease-in-out;
     }
-    #langToggle, #themeToggle {
-      background-color: var(--bg-color);
+    #langToggle, #themeToggle, #regionsButton {
+      background-color: var(--theme-button-bg);
       color: var(--theme-button-text);
     }
-    #langToggle:hover, #themeToggle:hover {
-      background-color: color-mix(in srgb, var(--bg-color) 80%, var(--button-hover) 20%);
-      box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    #langToggle:hover, #themeToggle:hover, #regionsButton:hover {
+      background-color: var(--button-hover);
+      color: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     }
-    #langToggle:active, #themeToggle:active {
+    #langToggle:active, #themeToggle:active, #regionsButton:active {
       transform: scale(0.95);
     }
     #langIcon {
@@ -470,6 +471,31 @@
     #quizOptions.fade-out, #flagQuizOptions.fade-out {
       animation: fade-out 0.3s ease-out forwards;
     }
+    #regionsButton {
+      background-color: var(--theme-button-bg);
+      color: var(--theme-button-text);
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+    }
+    #regionsButton:hover {
+      background-color: var(--button-hover);
+      color: white;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      transform: scale(1.05);
+    }
+    #regionsButton:active {
+      transform: scale(0.95);
+    }
+    #regionsButton {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 10;
+    }
     #authorLink {
       background-color: var(--theme-button-bg);
       color: var(--theme-button-text);
@@ -503,6 +529,9 @@
   </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
+  <a id="regionsButton" href="https://regions.example.com" target="_blank" class="animate-slide-up">
+    <span id="regionsText">Регионы</span>
+  </a>
   <div class="w-full max-w-sm p-6">
     <div class="flex justify-between items-center mb-4">
       <h1 id="header" class="text-3xl font-semibold animate-pulse">Столицы стран</h1>
@@ -518,7 +547,7 @@
     <nav class="flex gap-2 mb-4">
       <button id="tabSearch" class="tab active">Поиск</button>
       <button id="tabQuiz" class="tab">Викторина</button>
-      <button id="tabFlagQuiz" class="tab">Викторина 2</button>
+      <button id="tabFlagQuiz" class="tab">Флаги</button>
     </nav>
     <div id="searchContainer">
       <div class="relative">
@@ -579,7 +608,7 @@
       <ul id="themeList" class="space-y-2"></ul>
     </div>
     <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-30 hidden"></div>
-    <a id="authorLink" href="https://t.me/nkego" target="_blank" class="animate-slide-up">
+    <a id="authorLink" href="https://t.me/username" target="_blank" class="animate-slide-up">
       <span id="authorText">Автор</span>
     </a>
   </div>
@@ -902,7 +931,7 @@
         : `Correct: ${flagCorrectAnswers}, Incorrect: ${flagIncorrectAnswers}`;
       flagQuizScore.classList.remove('pulse-grow');
       void flagQuizScore.offsetWidth;
-      flagQuizScore.classList.add('pulse-grow');
+      quizScore.classList.add('pulse-grow');
     }
 
     function showTab(tab) {
@@ -1008,12 +1037,12 @@
         flagQuizQuestion.innerHTML = `<span>${lang === 'ru' ? 'Недостаточно стран для викторины' : 'Not enough countries for quiz'}</span>`;
         return;
       }
-      
+
       const randomCountry = countryKeys[Math.floor(Math.random() * countryKeys.length)];
       const country = countries[randomCountry];
       const flag = `https://flagcdn.com/96x72/${country.code}.png`;
       const correctCountry = lang === 'ru' ? randomCountry : country.en;
-      
+
       const img = document.createElement('img');
       img.src = flag;
       img.alt = `Flag of ${country.en}`;
@@ -1162,6 +1191,7 @@
       const lang = localStorage.getItem('language') === 'en' ? 'ru' : 'en';
       localStorage.setItem('language', lang);
       document.getElementById('langIcon').textContent = lang === 'ru' ? '🇷🇺' : '🇬🇧';
+      document.getElementById('regionsText').textContent = lang === 'ru' ? 'Регионы' : 'Regions';
       correctAnswers = 0;
       incorrectAnswers = 0;
       flagCorrectAnswers = 0;
@@ -1187,12 +1217,13 @@
       document.getElementById('modalTitle').textContent = lang === 'ru' ? 'Выберите тему' : 'Choose Theme';
       document.getElementById('tabSearch').textContent = lang === 'ru' ? 'Поиск' : 'Search';
       document.getElementById('tabQuiz').textContent = lang === 'ru' ? 'Викторина' : 'Quiz';
-      document.getElementById('tabFlagQuiz').textContent = lang === 'ru' ? 'Викторина 2' : 'Flag Quiz';
+      document.getElementById('tabFlagQuiz').textContent = lang === 'ru' ? 'Флаги' : 'Flag Quiz';
       document.getElementById('nextQuestion').textContent = lang === 'ru' ? 'Далее' : 'Next Question';
       document.getElementById('resetQuiz').textContent = lang === 'ru' ? 'Начать заново' : 'Start Over';
       document.getElementById('nextFlagQuestion').textContent = lang === 'ru' ? 'Далее' : 'Next Question';
       document.getElementById('resetFlagQuiz').textContent = lang === 'ru' ? 'Начать заново' : 'Start Over';
       document.getElementById('authorText').textContent = lang === 'ru' ? 'Автор' : 'Author';
+      document.getElementById('regionsText').textContent = lang === 'ru' ? 'Регионы' : 'Regions';
       updateQuizScore();
       updateFlagQuizScore();
       updateThemeOptions(lang);
@@ -1224,6 +1255,7 @@
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     document.getElementById('langIcon').textContent = savedLang === 'ru' ? '🇷🇺' : '🇬🇧';
+    document.getElementById('regionsText').textContent = savedLang === 'ru' ? 'Регионы' : 'Regions';
     updateUIText(savedLang);
     updateThemeOptions(savedLang);
     toggleClearButton();
@@ -1276,6 +1308,9 @@
     document.getElementById('resetFlagQuiz').addEventListener('click', resetFlagQuiz);
     document.getElementById('authorLink').addEventListener('click', () => {
       window.open('https://t.me/nkego', '_blank');
+    });
+    document.getElementById('regionsButton').addEventListener('click', () => {
+      window.open('https://nkego.github.io/s/r.html', '_blank');
     });
   </script>
 </body>
