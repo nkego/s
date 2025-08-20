@@ -1,0 +1,357 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Котики</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        body.light {
+            background-color: var(--tg-theme-button-text-color);
+            color: var(--tg-theme-button-text-color);
+        }
+        body.dark {
+            background-color: var(--tg-theme-button-text-color);
+            color: var(--tg-theme-button-text-color);
+        }
+        #content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-width: 600px;
+            overflow: hidden;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            border-radius: 15px; /* Закругленные углы */
+            margin: auto; /* Центрирование по вертикали и горизонтали */
+            padding: 10px;
+        }
+        #content.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        img {
+            width: 100%;
+            max-height: 400px;
+            height: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        #cat-fact {
+            margin-top: 10px;
+            font-size: 16px;
+            text-align: center;
+            max-width: 600px;
+            padding: 0 10px;
+        }
+        #bottom-button, #theme-toggle, #external-link, #telegram-link {
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: transform 0.2s, background-color 0.3s, color 0.3s, opacity 0.3s;
+        }
+        #bottom-button:hover, #theme-toggle:hover, #external-link:hover, #telegram-link:hover {
+            transform: scale(1.1);
+        }
+        body.light #bottom-button, body.light #theme-toggle, body.light #external-link, body.light #telegram-link {
+            background-color: var(--tg-theme-button-text-color);
+            color: var(--tg-theme-button-text-color);
+        }
+        body.light #bottom-button:hover, body.light #theme-toggle:hover, body.light #external-link:hover, body.light #telegram-link:hover {
+            background-color: var(--tg-theme-button-text-color);
+        }
+        body.dark #bottom-button, body.dark #theme-toggle, body.dark #external-link, body.dark #telegram-link {
+            background-color: var(--tg-theme-button-text-color);
+            color: var(--tg-theme-button-text-color);
+        }
+        body.dark #bottom-button:hover, body.dark #theme-toggle:hover, body.dark #external-link:hover, body.dark #telegram-link:hover {
+            background-color: var(--tg-theme-button-text-color);
+        }
+        #bottom-button {
+            position: fixed;
+            bottom: 20px;
+        }
+        #theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 16px;
+            padding: 10px 20px;
+        }
+        #external-link {
+            position: fixed;
+            top: 20px;
+            font-size: 16px;
+            padding: 10px 20px;
+        }
+        #telegram-link {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 16px;
+            padding: 10px 20px;
+        }
+        #theme-toggle.hidden, #external-link.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        @media (max-width: 768px) {
+            #theme-toggle, #external-link {
+                transition: opacity 0.3s ease;
+            }
+        }
+    </style>
+</head>
+<body class="light">
+    <button id="external-link" onclick="window.location.href='https://nkego.github.io/s/x.html'"></button>
+    <div id="content">
+        <img id="cat-image" alt="Котик">
+        <p id="cat-fact"></p>
+    </div>
+    <button id="bottom-button" onclick="showCatContent()">Показать котика!</button>
+    <button id="theme-toggle" onclick="toggleTheme()">ночная</button>
+    <button id="telegram-link" onclick="window.location.href='https://t.me/nkego'">N</button>
+
+    <script>
+        // Локальный список фактов о котах на русском
+        const catFacts = [
+            "Кошки могут прыгать на высоту, превышающую их собственный рост в пять раз.",
+            "У кошек около 230 костей в теле, что больше, чем у человека.",
+            "Кошки спят в среднем 12-16 часов в день.",
+            "Кошки могут издавать около 100 различных звуков.",
+            "Усы кошек помогают им определять, пролезут ли они в узкое пространство.",
+            "Кошки видят в темноте в шесть раз лучше, чем люди.",
+            "Кошки могут поворачивать уши на 180 градусов.",
+            "Сердце кошки бьется в два раза быстрее, чем у человека: от 110 до 140 ударов в минуту.",
+            "Кошки не чувствуют сладкий вкус из-за особенностей их вкусовых рецепторов.",
+            "Котята начинают видеть сны с возраста около одной недели.",
+            "Кошки могут прыгать на высоту, превышающую их собственный рост в пять раз.",
+            "У кошек около 230 костей в теле, что больше, чем у человека.",
+            "Кошки спят в среднем 12-16 часов в день.",
+            "Кошки могут издавать около 100 различных звуков.",
+            "Домашние кошки живут рядом с человеком уже более 9 тысяч лет",
+            "Кошки способны издавать около 100 различных звуков",
+            "Кошки слышат ультразвук, недоступный человеку",
+            "Средняя продолжительность жизни домашней кошки — 12–15 лет",
+            "Самая старая кошка прожила 38 лет",
+            "У каждой кошки уникальный рисунок на носу",
+            "Кошки спят около 70% своей жизни",
+            "Кошка может развить скорость до 48 км/ч",
+            "У кошки более 230 костей в теле",
+            "Усы помогают кошкам ориентироваться в пространстве",
+            "Кошки могут поворачивать уши на 180 градусов",
+            "У кошек пять пальцев на передних лапах и четыре на задних",
+            "В Древнем Египте кошек считали священными",
+            "Сфинкс — порода кошек без шерсти",
+            "Первая клонированная кошка называлась СС",
+            "Кошки мурлыкают не только от удовольствия, но и при боли",
+            "Мурлыканье помогает кошкам лечиться",
+            "Кошки видят в темноте в 6 раз лучше человека",
+            "Цвет глаз у котят меняется с возрастом",
+            "Кошки не чувствуют сладкого вкуса",
+            "Кошки пьют воду, зачерпывая её языком как ложкой",
+            "У кошек отличное чувство равновесия",
+            "Кошки способны запоминать до 100 разных лиц",
+            "Кошки могут прыгать в 7 раз выше собственного роста",
+            "Кошки способны разворачиваться в воздухе при падении",
+            "Кошки потеют только через подушечки лап",
+            "Сердце кошки бьётся в два раза быстрее человеческого",
+            "Кошки могут различать до 150 запахов одновременно",
+            "Домашние кошки произошли от африканской степной кошки",
+            "Кошки могут узнавать своё имя",
+            "Кошки используют хвост для выражения эмоций",
+            "У кошек хорошие ночные охотничьи инстинкты",
+            "Кошки часто приносят «добычу» хозяину как подарок",
+            "Кошки видят мир в голубых и зелёных оттенках",
+            "Усы кошек чувствительны к малейшему движению воздуха",
+            "Кошки любят высокие места для обзора",
+            "Кошки чаще всего правши или левши",
+            "Кошки могут бегать зигзагами, чтобы избежать опасности",
+            "Мурлыканье может успокаивать не только кошек, но и людей",
+            "Кошки трепещут лапами, когда хотят поймать птицу",
+            "Кошки узнают людей по голосу",
+            "Кошки могут спать по 16 часов в сутки",
+            "Кошки видят движения лучше, чем неподвижные предметы",
+            "Вибриссы помогают кошкам ориентироваться в темноте",
+            "Кошки могут быть как экстравертами, так и интровертами",
+            "Кошки имеют очень гибкий позвоночник",
+            "Кошки могут вытягивать когти только при необходимости",
+            "Кошки любят тепло и ищут самые тёплые места",
+            "Кошки лучше всего воспринимают низкие звуки",
+            "Кошки используют запахи для общения",
+            "Кошки могут узнавать настроение хозяина",
+            "Кошки трясут хвостом, когда рады видеть хозяина",
+            "Кошки не любят сильные запахи цитрусовых",
+            "Кошки видят почти в полной темноте",
+            "Кошки могут чувствовать землетрясения до их начала",
+            "Кошки имеют индивидуальные привычки сна",
+            "У кошек отличная краткосрочная память",
+            "Кошки могут «говорить» с людьми с помощью мяуканья",
+            "Кошки не мяукают друг с другом, только с людьми",
+            "Кошки часто трутся о вещи, оставляя свой запах",
+            "Кошки часто ложатся на ноутбуки из-за тепла",
+            "Кошки могут вставать на задние лапы для обзора",
+            "Кошки любят коробки и замкнутые пространства",
+            "Кошки могут гнать воображаемую добычу",
+            "Кошки иногда «разговаривают» с птицами щёлкающим звуком",
+            "Кошки обожают играть с движущимися предметами",
+            "Кошки могут узнавать себя в зеркале запахом",
+            "Кошки часто спят, свернувшись клубком, чтобы сохранить тепло",
+            "Кошки любят точить когти для метки территории",
+            "Кошки часто охотятся в сумерках",
+            "Кошки способны слышать частоты до 65 кГц",
+            "Кошки видят мир менее ярким, чем люди",
+            "Кошки бывают социальными или независимыми",
+            "Кошки мурлыкают на частоте, полезной для костей",
+            "Кошки могут прыгнуть на высоту до 2 метров",
+            "Кошки любят сидеть на возвышенности",
+            "Кошки могут узнавать время кормления",
+            "Кошки могут воспитывать друг друга в группе",
+            "Кошки могут учиться подражанием",
+            "Кошки спят разными фазами сна, как люди",
+            "Кошки умеют открывать двери лапами",
+            "Кошки могут переносить новорождённых в зубах",
+            "Кошки заботятся о чистоте больше, чем собаки",
+            "Кошки могут издавать особый звук, требуя еду",
+            "Кошки быстро привыкают к рутине",
+            "Кошки могут обижаться на хозяина",
+            "Кошки умеют открывать шкафы и ящики",
+            "Кошки любят сидеть на плечах у хозяина",
+            "Кошки могут менять поведение с возрастом",
+            "Кошки всегда стараются приземлиться на лапы",
+            "Кошки боятся громких звуков",
+            "Кошки могут дружить с собаками",
+            "Кошки любят солнечные лучи",
+            "Кошки часто спят рядом с хозяином",
+            "Кошки часто выбирают одного человека в доме",
+            "Кошки издают тихое «трельканье» при приветствии",
+            "Кошки могут мурлыкать даже во сне",
+            "Кошки имеют индивидуальные предпочтения в еде",
+            "Кошки иногда смотрят в одну точку без причины",
+            "Кошки любят мягкие поверхности",
+            "Кошки могут быть очень ревнивыми",
+            "Кошки приносят радость и снижают стресс у человека",
+            "Усы кошек помогают им определять, пролезут ли они в узкое пространство."
+        ];
+
+        async function showCatContent() {
+            const contentDiv = document.getElementById('content');
+            const catImage = document.getElementById('cat-image');
+            const catFact = document.getElementById('cat-fact');
+
+            // Очищаем содержимое
+            catImage.src = '';
+            catFact.textContent = '';
+
+            try {
+                // Получаем случайное изображение с The Cat API
+                const imageResponse = await fetch('https://api.thecatapi.com/v1/images/search?mime_types=jpg,png');
+                if (!imageResponse.ok) throw new Error('Ошибка загрузки изображения');
+                const imageData = await imageResponse.json();
+                catImage.src = imageData[0].url;
+
+                // Выбираем случайный факт из локального списка
+                const randomFact = catFacts[Math.floor(Math.random() * catFacts.length)];
+                catFact.textContent = randomFact;
+
+                // Добавляем класс для анимации
+                contentDiv.classList.remove('show');
+                setTimeout(() => contentDiv.classList.add('show'), 10);
+            } catch (error) {
+                console.error('Ошибка загрузки котика:', error.message);
+                catFact.textContent = 'Ошибка загрузки изображения, попробуйте снова!';
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeButton = document.getElementById('theme-toggle');
+            if (body.classList.contains('light')) {
+                body.classList.remove('light');
+                body.classList.add('dark');
+                themeButton.textContent = 'дневная';
+            } else {
+                body.classList.remove('dark');
+                body.classList.add('light');
+                themeButton.textContent = 'ночная';
+            }
+        }
+
+        // Управление видимостью кнопок при прокрутке на мобильных устройствах
+        let lastScrollTop = 0;
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+            const themeButton = document.getElementById('theme-toggle');
+            const externalLink = document.getElementById('external-link');
+
+            // Проверяем, что ширина экрана <= 768px (мобильные устройства)
+            if (window.innerWidth <= 768) {
+                if (currentScroll > lastScrollTop && currentScroll > 0) {
+                    // Прокрутка вниз
+                    themeButton.classList.add('hidden');
+                    externalLink.classList.add('hidden');
+                } else {
+                    // Прокрутка вверх или в начале
+                    themeButton.classList.remove('hidden');
+                    externalLink.classList.remove('hidden');
+                }
+            }
+            lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+        });
+
+        // Показываем котика и факт при загрузке страницы
+        showCatContent();
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</body>
+</html>
