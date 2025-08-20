@@ -50,99 +50,169 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
             font-family: Arial, sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        body.light {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        body.dark {
+            background-color: #1a1a1a;
+            color: #f0f0f0;
         }
         #content {
-            flex-grow: 1;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             max-width: 600px;
-            max-height: 400px;
             overflow: hidden;
             opacity: 0;
             transform: scale(0.8);
             transition: opacity 0.5s ease, transform 0.5s ease;
+            border-radius: 15px; /* Закругленные углы */
+            margin: auto; /* Центрирование по вертикали и горизонтали */
+            padding: 10px;
         }
         #content.show {
             opacity: 1;
             transform: scale(1);
         }
-        img, video {
+        img {
             width: 100%;
+            max-height: 400px;
             height: auto;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-        button {
-            margin: 20px;
+        #cat-fact {
+            margin-top: 10px;
+            font-size: 16px;
+            text-align: center;
+            max-width: 600px;
+            padding: 0 10px;
+        }
+        #bottom-button, #theme-toggle, #external-link, #telegram-link {
             padding: 15px 30px;
             font-size: 18px;
             cursor: pointer;
-            background-color: #ff6f61;
-            color: white;
             border: none;
             border-radius: 5px;
-            transition: transform 0.2s, background-color 0.2s;
+            transition: transform 0.2s, background-color 0.3s, color 0.3s;
         }
-        button:hover {
-            background-color: #ff4f41;
+        #bottom-button:hover, #theme-toggle:hover, #external-link:hover, #telegram-link:hover {
             transform: scale(1.1);
+        }
+        body.light #bottom-button, body.light #theme-toggle, body.light #external-link, body.light #telegram-link {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        body.light #bottom-button:hover, body.light #theme-toggle:hover, body.light #external-link:hover, body.light #telegram-link:hover {
+            background-color: #d9d9d9;
+        }
+        body.dark #bottom-button, body.dark #theme-toggle, body.dark #external-link, body.dark #telegram-link {
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+        body.dark #bottom-button:hover, body.dark #theme-toggle:hover, body.dark #external-link:hover, body.dark #telegram-link:hover {
+            background-color: #333;
+        }
+        #bottom-button {
+            position: fixed;
+            bottom: 20px;
+        }
+        #theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 16px;
+            padding: 10px 20px;
+        }
+        #external-link {
+            position: fixed;
+            top: 20px;
+            font-size: 16px;
+            padding: 10px 20px;
+        }
+        #telegram-link {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 16px;
+            padding: 10px 20px;
         }
     </style>
 </head>
-<body>
-    <div id="content"></div>
-    <button onclick="showCatContent()">Показать котика!</button>
+<body class="light">
+    <button id="external-link" onclick="window.location.href='https://nkego.github.io/s/x.html'">на главную</button>
+    <div id="content">
+        <img id="cat-image" alt="Котик">
+        <p id="cat-fact"></p>
+    </div>
+    <button id="bottom-button" onclick="showCatContent()">Показать котика!</button>
+    <button id="theme-toggle" onclick="toggleTheme()">ночная</button>
+    <button id="telegram-link" onclick="window.location.href='https://t.me/nkego'">N</button>
 
     <script>
+        async function translateText(text) {
+            try {
+                const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|ru`);
+                const data = await response.json();
+                return data.responseData.translatedText;
+            } catch (error) {
+                console.error('Ошибка перевода:', error);
+                return text; // Возвращаем оригинальный текст, если перевод не удался
+            }
+        }
+
         async function showCatContent() {
             const contentDiv = document.getElementById('content');
-            contentDiv.innerHTML = ''; // Очищаем содержимое
+            const catImage = document.getElementById('cat-image');
+            const catFact = document.getElementById('cat-fact');
 
-            // Случайно выбираем, показывать изображение или GIF
-            const isImage = Math.random() < 0.7; // 70% шанс для изображения
+            // Очищаем содержимое
+            catImage.src = '';
+            catFact.textContent = '';
 
             try {
-                let src, type;
-                if (isImage) {
-                    // Получаем случайное изображение с The Cat API
-                    const response = await fetch('https://api.thecatapi.com/v1/images/search?mime_types=jpg,png');
-                    const data = await response.json();
-                    src = data[0].url;
-                    type = 'image';
-                } else {
-                    // Получаем случайный GIF с Cataas API
-                    src = 'https://cataas.com/cat/gif';
-                    type = 'video';
-                }
+                // Получаем случайное изображение с The Cat API
+                const imageResponse = await fetch('https://api.thecatapi.com/v1/images/search?mime_types=jpg,png');
+                const imageData = await imageResponse.json();
+                catImage.src = imageData[0].url;
 
-                // Создаем элемент в зависимости от типа контента
-                if (type === 'image') {
-                    const img = document.createElement('img');
-                    img.src = src;
-                    img.alt = 'Котик';
-                    contentDiv.appendChild(img);
-                } else {
-                    const video = document.createElement('video');
-                    video.src = src;
-                    video.controls = true;
-                    video.autoplay = true;
-                    video.muted = true; // Для автозапуска
-                    contentDiv.appendChild(video);
-                }
+                // Получаем случайный факт о котах с Cat Facts API
+                const factResponse = await fetch('https://catfact.ninja/fact');
+                const factData = await factResponse.json();
+                const factText = factData.fact;
+
+                // Переводим факт на русский
+                const translatedFact = await translateText(factText);
+                catFact.textContent = translatedFact;
 
                 // Добавляем класс для анимации
                 contentDiv.classList.remove('show');
                 setTimeout(() => contentDiv.classList.add('show'), 10);
             } catch (error) {
-                console.error('Ошибка загрузки котика:', error);
-                contentDiv.innerHTML = '<p>Ошибка загрузки котика, попробуйте снова!</p>';
+                console.error('Ошибка загрузки котика или факта:', error);
+                catFact.textContent = 'Ошибка загрузки, попробуйте снова!';
             }
         }
 
-        // Показываем котика при загрузке страницы
+        function toggleTheme() {
+            const body = document.body;
+            const themeButton = document.getElementById('theme-toggle');
+            if (body.classList.contains('light')) {
+                body.classList.remove('light');
+                body.classList.add('dark');
+                themeButton.textContent = 'дневная';
+            } else {
+                body.classList.remove('dark');
+                body.classList.add('light');
+                themeButton.textContent = 'ночная';
+            }
+        }
+
+        // Показываем котика и факт при загрузке страницы
         showCatContent();
     </script>
 </body>
