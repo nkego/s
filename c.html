@@ -1191,7 +1191,7 @@
       const lang = localStorage.getItem('language') === 'en' ? 'ru' : 'en';
       localStorage.setItem('language', lang);
       document.getElementById('langIcon').textContent = lang === 'ru' ? '🇷🇺' : '🇬🇧';
-      document.getElementById('regionsText').textContent = lang === 'ru' ? 'Регионы' : 'Regions';
+      document.getElementById('regionsText').textContent = lang === 'ru' ? 'на главную' : 'main page';
       correctAnswers = 0;
       incorrectAnswers = 0;
       flagCorrectAnswers = 0;
@@ -1222,8 +1222,8 @@
       document.getElementById('resetQuiz').textContent = lang === 'ru' ? 'Начать заново' : 'Start Over';
       document.getElementById('nextFlagQuestion').textContent = lang === 'ru' ? 'Далее' : 'Next Question';
       document.getElementById('resetFlagQuiz').textContent = lang === 'ru' ? 'Начать заново' : 'Start Over';
-      document.getElementById('authorText').textContent = lang === 'ru' ? 'Автор' : 'Author';
-      document.getElementById('regionsText').textContent = lang === 'ru' ? 'Регионы' : 'Regions';
+      document.getElementById('authorText').textContent = lang === 'ru' ? 'N' : 'N';
+      document.getElementById('regionsText').textContent = lang === 'ru' ? 'на главную' : 'main page';
       updateQuizScore();
       updateFlagQuizScore();
       updateThemeOptions(lang);
@@ -1255,7 +1255,7 @@
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     document.getElementById('langIcon').textContent = savedLang === 'ru' ? '🇷🇺' : '🇬🇧';
-    document.getElementById('regionsText').textContent = savedLang === 'ru' ? 'Регионы' : 'Regions';
+    document.getElementById('regionsText').textContent = savedLang === 'ru' ? 'на главную' : 'main page';
     updateUIText(savedLang);
     updateThemeOptions(savedLang);
     toggleClearButton();
