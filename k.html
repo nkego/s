@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -84,6 +45,7 @@
             max-height: 400px;
             height: auto;
             border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         #cat-fact {
             margin-top: 10px;
@@ -98,7 +60,7 @@
             cursor: pointer;
             border: none;
             border-radius: 5px;
-            transition: transform 0.2s, background-color 0.3s, color 0.3s;
+            transition: transform 0.2s, background-color 0.3s, color 0.3s, opacity 0.3s;
         }
         #bottom-button:hover, #theme-toggle:hover, #external-link:hover, #telegram-link:hover {
             transform: scale(1.1);
@@ -106,6 +68,7 @@
         body.light #bottom-button, body.light #theme-toggle, body.light #external-link, body.light #telegram-link {
             background-color: #f0f0f0;
             color: #333;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         body.light #bottom-button:hover, body.light #theme-toggle:hover, body.light #external-link:hover, body.light #telegram-link:hover {
             background-color: #d9d9d9;
@@ -113,6 +76,7 @@
         body.dark #bottom-button, body.dark #theme-toggle, body.dark #external-link, body.dark #telegram-link {
             background-color: #1a1a1a;
             color: #f0f0f0;
+            box-shadow: 0 2px 4px rgba(255, 255, 255, 0.2);
         }
         body.dark #bottom-button:hover, body.dark #theme-toggle:hover, body.dark #external-link:hover, body.dark #telegram-link:hover {
             background-color: #333;
@@ -141,17 +105,26 @@
             font-size: 16px;
             padding: 10px 20px;
         }
+        #theme-toggle.hidden, #external-link.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        @media (max-width: 768px) {
+            #theme-toggle, #external-link {
+                transition: opacity 0.3s ease;
+            }
+        }
     </style>
 </head>
 <body class="light">
-    <button id="external-link" onclick="window.location.href='https://nkego.github.io/s/x.html'">на главную</button>
+    <button id="external-link" onclick="window.location.href='https://catfact.ninja/'">Перейти на Cat Facts</button>
     <div id="content">
         <img id="cat-image" alt="Котик">
         <p id="cat-fact"></p>
     </div>
     <button id="bottom-button" onclick="showCatContent()">Показать котика!</button>
-    <button id="theme-toggle" onclick="toggleTheme()">ночная</button>
-    <button id="telegram-link" onclick="window.location.href='https://t.me/nkego'">N</button>
+    <button id="theme-toggle" onclick="toggleTheme()">Тёмная тема</button>
+    <button id="telegram-link" onclick="window.location.href='https://t.me/your_telegram_handle'">Telegram автора</button>
 
     <script>
         async function translateText(text) {
@@ -204,13 +177,35 @@
             if (body.classList.contains('light')) {
                 body.classList.remove('light');
                 body.classList.add('dark');
-                themeButton.textContent = 'дневная';
+                themeButton.textContent = 'Светлая тема';
             } else {
                 body.classList.remove('dark');
                 body.classList.add('light');
-                themeButton.textContent = 'ночная';
+                themeButton.textContent = 'Тёмная тема';
             }
         }
+
+        // Управление видимостью кнопок при прокрутке на мобильных устройствах
+        let lastScrollTop = 0;
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+            const themeButton = document.getElementById('theme-toggle');
+            const externalLink = document.getElementById('external-link');
+
+            // Проверяем, что ширина экрана <= 768px (мобильные устройства)
+            if (window.innerWidth <= 768) {
+                if (currentScroll > lastScrollTop && currentScroll > 0) {
+                    // Прокрутка вниз
+                    themeButton.classList.add('hidden');
+                    externalLink.classList.add('hidden');
+                } else {
+                    // Прокрутка вверх или в начале
+                    themeButton.classList.remove('hidden');
+                    externalLink.classList.remove('hidden');
+                }
+            }
+            lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+        });
 
         // Показываем котика и факт при загрузке страницы
         showCatContent();
