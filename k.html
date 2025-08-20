@@ -84,6 +84,7 @@
             max-height: 400px;
             height: auto;
             border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         #cat-fact {
             margin-top: 10px;
@@ -98,7 +99,7 @@
             cursor: pointer;
             border: none;
             border-radius: 5px;
-            transition: transform 0.2s, background-color 0.3s, color 0.3s;
+            transition: transform 0.2s, background-color 0.3s, color 0.3s, opacity 0.3s;
         }
         #bottom-button:hover, #theme-toggle:hover, #external-link:hover, #telegram-link:hover {
             transform: scale(1.1);
@@ -141,6 +142,15 @@
             font-size: 16px;
             padding: 10px 20px;
         }
+        #theme-toggle.hidden, #external-link.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        @media (max-width: 768px) {
+            #theme-toggle, #external-link {
+                transition: opacity 0.3s ease;
+            }
+        }
     </style>
 </head>
 <body class="light">
@@ -154,14 +164,28 @@
     <button id="telegram-link" onclick="window.location.href='https://t.me/nkego'">N</button>
 
     <script>
+        // Локальный список фактов на русском в качестве запасного варианта
+        const fallbackFacts = [
+            "Кошки могут прыгать на высоту, превышающую их собственный рост в пять раз.",
+            "У кошек около 230 костей в теле, что больше, чем у человека.",
+            "Кошки спят в среднем 12-16 часов в день.",
+            "Кошки могут издавать около 100 различных звуков.",
+            "Усы кошек помогают им определять, пролезут ли они в узкое пространство."
+        ];
+
         async function translateText(text) {
             try {
                 const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|ru`);
                 const data = await response.json();
-                return data.responseData.translatedText;
+                if (data.responseStatus === 200 && data.responseData && data.responseData.translatedText) {
+                    // Удаляем HTML-теги и нежелательные ссылки
+                    return data.responseData.translatedText.replace(/<[^>]+>/g, '').replace(/https?:\/\/[^\s]+/g, '');
+                }
+                throw new Error('Ошибка перевода: некорректный ответ');
             } catch (error) {
-                console.error('Ошибка перевода:', error);
-                return text; // Возвращаем оригинальный текст, если перевод не удался
+                console.error('Ошибка перевода:', error.message);
+                // Возвращаем случайный факт из локального списка
+                return fallbackFacts[Math.floor(Math.random() * fallbackFacts.length)];
             }
         }
 
@@ -177,11 +201,13 @@
             try {
                 // Получаем случайное изображение с The Cat API
                 const imageResponse = await fetch('https://api.thecatapi.com/v1/images/search?mime_types=jpg,png');
+                if (!imageResponse.ok) throw new Error('Ошибка загрузки изображения');
                 const imageData = await imageResponse.json();
                 catImage.src = imageData[0].url;
 
                 // Получаем случайный факт о котах с Cat Facts API
                 const factResponse = await fetch('https://catfact.ninja/fact');
+                if (!factResponse.ok) throw new Error('Ошибка загрузки факта');
                 const factData = await factResponse.json();
                 const factText = factData.fact;
 
@@ -193,7 +219,7 @@
                 contentDiv.classList.remove('show');
                 setTimeout(() => contentDiv.classList.add('show'), 10);
             } catch (error) {
-                console.error('Ошибка загрузки котика или факта:', error);
+                console.error('Ошибка загрузки котика или факта:', error.message);
                 catFact.textContent = 'Ошибка загрузки, попробуйте снова!';
             }
         }
@@ -211,6 +237,28 @@
                 themeButton.textContent = 'ночная';
             }
         }
+
+        // Управление видимостью кнопок при прокрутке на мобильных устройствах
+        let lastScrollTop = 0;
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+            const themeButton = document.getElementById('theme-toggle');
+            const externalLink = document.getElementById('external-link');
+
+            // Проверяем, что ширина экрана <= 768px (мобильные устройства)
+            if (window.innerWidth <= 768) {
+                if (currentScroll > lastScrollTop && currentScroll > 0) {
+                    // Прокрутка вниз
+                    themeButton.classList.add('hidden');
+                    externalLink.classList.add('hidden');
+                } else {
+                    // Прокрутка вверх или в начале
+                    themeButton.classList.remove('hidden');
+                    externalLink.classList.remove('hidden');
+                }
+            }
+            lastScrollTop = currentScroll <= 0 ? 0 : currentScroll;
+        });
 
         // Показываем котика и факт при загрузке страницы
         showCatContent();
