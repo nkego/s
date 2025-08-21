@@ -20,7 +20,7 @@
             'shake': 'shake 0.5s ease-in-out',
             'slide-in': 'slideIn 0.4s ease-out',
             'clear-pulse': 'clearPulse 0.3s ease-in-out',
-            'fade-out': 'fadeOut 0.3s ease-out forwards'
+            'fade-out': 'fadeOut 0.4s ease-out forwards'
           },
           keyframes: {
             pulse: {
@@ -130,6 +130,7 @@
 
     button:active:not(:disabled) {
       transform: scale(0.95);
+      background-color: var(--button-hover);
     }
 
     #suggestions {
@@ -231,6 +232,7 @@
     .quiz-option:active:not(:disabled) {
       background-color: var(--quiz-button-active);
       transform: scale(0.95);
+      transition: transform 0.1s ease;
     }
 
     .quiz-option.correct {
@@ -576,48 +578,63 @@
       const checkAnswer = (selected) => {
         try {
           console.log('Checking quiz answer, selected:', selected);
-          setQuizOptions(prev =>
-            prev.map(option => ({
-              ...option,
-              disabled: true,
-              className: `quiz-option ${option.text === selected ? (option.correct ? 'correct fade-out' : 'incorrect fade-out') : (option.correct ? 'correct fade-out' : 'fade-out')}`
-            }))
-          );
-          if (selected === quizOptions.find(opt => opt.correct).text) {
-            setCorrectAnswers(prev => {
-              const newCount = prev + 1;
-              localStorage.setItem('correctAnswers', newCount);
-              return newCount;
-            });
-            if (tg && typeof tg.showAlert === 'function') {
-              console.log('Calling showAlert for correct answer');
-              tg.showAlert(lang === 'ru' ? 'Правильно!' : 'Correct!', () => {
-                console.log('Triggering next question after alert');
-                setTimeout(startQuiz, 400); // Wait for fade-out animation
-              });
-            } else {
-              console.warn('showAlert not available, using standard alert');
-              alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
-              setTimeout(startQuiz, 900); // 400ms fade-out + 500ms for alert
-            }
-          } else {
-            setIncorrectAnswers(prev => {
-              const newCount = prev + 1;
-              localStorage.setItem('incorrectAnswers', newCount);
-              return newCount;
-            });
-            if (tg && typeof tg.showAlert === 'function') {
-              console.log('Calling showAlert for incorrect answer');
-              tg.showAlert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!', () => {
-                console.log('Triggering next question after alert');
-                setTimeout(startQuiz, 400); // Wait for fade-out animation
-              });
-            } else {
-              console.warn('showAlert not available, using standard alert');
-              alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
-              setTimeout(startQuiz, 900); // 400ms fade-out + 500ms for alert
-            }
-          }
+          console.log('Applying active state');
+          // Delay to allow active state (scale: 0.95) to complete
+          setTimeout(() => {
+            console.log('Reverting to normal state');
+            setQuizOptions(prev =>
+              prev.map(option => ({
+                ...option,
+                className: 'quiz-option' // Revert to normal state
+              }))
+            );
+            // Apply correct/incorrect and fade-out after normal state
+            setTimeout(() => {
+              console.log('Applying result state and fade-out');
+              setQuizOptions(prev =>
+                prev.map(option => ({
+                  ...option,
+                  disabled: true,
+                  className: `quiz-option ${option.text === selected ? (option.correct ? 'correct fade-out' : 'incorrect fade-out') : (option.correct ? 'correct fade-out' : 'fade-out')}`
+                }))
+              );
+              if (selected === quizOptions.find(opt => opt.correct).text) {
+                setCorrectAnswers(prev => {
+                  const newCount = prev + 1;
+                  localStorage.setItem('correctAnswers', newCount);
+                  return newCount;
+                });
+                if (tg && typeof tg.showAlert === 'function') {
+                  console.log('Calling showAlert for correct answer');
+                  tg.showAlert(lang === 'ru' ? 'Правильно!' : 'Correct!', () => {
+                    console.log('Triggering next question after alert');
+                    setTimeout(startQuiz, 400); // Wait for fade-out animation
+                  });
+                } else {
+                  console.warn('showAlert not available, using standard alert');
+                  alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+                  setTimeout(startQuiz, 900); // 400ms fade-out + 500ms for alert
+                }
+              } else {
+                setIncorrectAnswers(prev => {
+                  const newCount = prev + 1;
+                  localStorage.setItem('incorrectAnswers', newCount);
+                  return newCount;
+                });
+                if (tg && typeof tg.showAlert === 'function') {
+                  console.log('Calling showAlert for incorrect answer');
+                  tg.showAlert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!', () => {
+                    console.log('Triggering next question after alert');
+                    setTimeout(startQuiz, 400); // Wait for fade-out animation
+                  });
+                } else {
+                  console.warn('showAlert not available, using standard alert');
+                  alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+                  setTimeout(startQuiz, 900); // 400ms fade-out + 500ms for alert
+                }
+              }
+            }, 100); // Brief hold after reverting to normal state
+          }, 200); // Allow active state to complete
         } catch (error) {
           console.error('Error in checkAnswer:', error);
           if (tg && typeof tg.showAlert === 'function') {
@@ -751,48 +768,63 @@
       const checkAnswer = (selected) => {
         try {
           console.log('Checking flag quiz answer, selected:', selected);
-          setFlagQuizOptions(prev =>
-            prev.map(option => ({
-              ...option,
-              disabled: true,
-              className: `quiz-option ${option.text === selected ? (option.correct ? 'correct fade-out' : 'incorrect fade-out') : (option.correct ? 'correct fade-out' : 'fade-out')}`
-            }))
-          );
-          if (selected === flagQuizOptions.find(opt => opt.correct).text) {
-            setFlagCorrectAnswers(prev => {
-              const newCount = prev + 1;
-              localStorage.setItem('flagCorrectAnswers', newCount);
-              return newCount;
-            });
-            if (tg && typeof tg.showAlert === 'function') {
-              console.log('Calling showAlert for correct answer');
-              tg.showAlert(lang === 'ru' ? 'Правильно!' : 'Correct!', () => {
-                console.log('Triggering next question after alert');
-                setTimeout(startFlagQuiz, 400); // Wait for fade-out animation
-              });
-            } else {
-              console.warn('showAlert not available, using standard alert');
-              alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
-              setTimeout(startFlagQuiz, 900); // 400ms fade-out + 500ms for alert
-            }
-          } else {
-            setFlagIncorrectAnswers(prev => {
-              const newCount = prev + 1;
-              localStorage.setItem('flagIncorrectAnswers', newCount);
-              return newCount;
-            });
-            if (tg && typeof tg.showAlert === 'function') {
-              console.log('Calling showAlert for incorrect answer');
-              tg.showAlert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!', () => {
-                console.log('Triggering next question after alert');
-                setTimeout(startFlagQuiz, 400); // Wait for fade-out animation
-              });
-            } else {
-              console.warn('showAlert not available, using standard alert');
-              alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
-              setTimeout(startFlagQuiz, 900); // 400ms fade-out + 500ms for alert
-            }
-          }
+          console.log('Applying active state');
+          // Delay to allow active state (scale: 0.95) to complete
+          setTimeout(() => {
+            console.log('Reverting to normal state');
+            setFlagQuizOptions(prev =>
+              prev.map(option => ({
+                ...option,
+                className: 'quiz-option' // Revert to normal state
+              }))
+            );
+            // Apply correct/incorrect and fade-out after normal state
+            setTimeout(() => {
+              console.log('Applying result state and fade-out');
+              setFlagQuizOptions(prev =>
+                prev.map(option => ({
+                  ...option,
+                  disabled: true,
+                  className: `quiz-option ${option.text === selected ? (option.correct ? 'correct fade-out' : 'incorrect fade-out') : (option.correct ? 'correct fade-out' : 'fade-out')}`
+                }))
+              );
+              if (selected === flagQuizOptions.find(opt => opt.correct).text) {
+                setFlagCorrectAnswers(prev => {
+                  const newCount = prev + 1;
+                  localStorage.setItem('flagCorrectAnswers', newCount);
+                  return newCount;
+                });
+                if (tg && typeof tg.showAlert === 'function') {
+                  console.log('Calling showAlert for correct answer');
+                  tg.showAlert(lang === 'ru' ? 'Правильно!' : 'Correct!', () => {
+                    console.log('Triggering next question after alert');
+                    setTimeout(startFlagQuiz, 400); // Wait for fade-out animation
+                  });
+                } else {
+                  console.warn('showAlert not available, using standard alert');
+                  alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+                  setTimeout(startFlagQuiz, 900); // 400ms fade-out + 500ms for alert
+                }
+              } else {
+                setFlagIncorrectAnswers(prev => {
+                  const newCount = prev + 1;
+                  localStorage.setItem('flagIncorrectAnswers', newCount);
+                  return newCount;
+                });
+                if (tg && typeof tg.showAlert === 'function') {
+                  console.log('Calling showAlert for incorrect answer');
+                  tg.showAlert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!', () => {
+                    console.log('Triggering next question after alert');
+                    setTimeout(startFlagQuiz, 400); // Wait for fade-out animation
+                  });
+                } else {
+                  console.warn('showAlert not available, using standard alert');
+                  alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+                  setTimeout(startFlagQuiz, 900); // 400ms fade-out + 500ms for alert
+                }
+              }
+            }, 100); // Brief hold after reverting to normal state
+          }, 200); // Allow active state to complete
         } catch (error) {
           console.error('Error in checkAnswer:', error);
           if (tg && typeof tg.showAlert === 'function') {
