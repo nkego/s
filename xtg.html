@@ -32,20 +32,21 @@
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
     .cat-content {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      width: 100%;
-      max-width: 600px;
-      height: calc(100vh - 100px);
       overflow: hidden;
       opacity: 0;
       transform: scale(0.8);
       transition: opacity 0.5s ease, transform 0.5s ease;
-      border-radius: 15px;
       padding: 10px;
-      margin: 20px auto;
+      background-color: #f1f5f9;
     }
     .cat-content.show {
       opacity: 1;
@@ -208,35 +209,37 @@
 
       return (
         <div className="min-h-screen flex flex-col items-center justify-center p-4 relative transition-colors duration-500 dynamic-bg text-gray-900">
-          <h1
-            className="text-4xl font-bold mb-8 text-gray-700 animate-[fadeIn_1s_ease-out_forwards]"
-          >
-            N
-          </h1>
-
-          {!showCatContent ? (
-            <div className="space-y-4 w-full max-w-xs">
-              {buttons.map((button, index) => (
-                <button
-                  key={button.name}
-                  onClick={button.url ? () => window.open(button.url, '_blank', 'noopener,noreferrer') : handleCatButtonClick}
-                  className={`block w-full py-3 px-6 text-center rounded-lg font-semibold text-lg shadow-lg transition-all duration-300 bg-gray-300 text-gray-900 hover:bg-gray-400 hover:scale-105 active:scale-95 ${visibleButtons.includes(index) ? 'animate-[slideIn_0.6s_ease-out_forwards]' : 'opacity-0'}`}
-                >
-                  {button.name}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className={`cat-content ${isCatContentVisible ? 'show' : ''}`} style={{ backgroundColor: '#f1f5f9' }}>
+          {!showCatContent && (
+            <>
+              <h1
+                className="text-4xl font-bold mb-8 text-gray-700 animate-[fadeIn_1s_ease-out_forwards]"
+              >
+                N
+              </h1>
+              <div className="space-y-4 w-full max-w-xs">
+                {buttons.map((button, index) => (
+                  <button
+                    key={button.name}
+                    onClick={button.url ? () => window.open(button.url, '_blank', 'noopener,noreferrer') : handleCatButtonClick}
+                    className={`block w-full py-3 px-6 text-center rounded-lg font-semibold text-lg shadow-lg transition-all duration-300 bg-gray-300 text-gray-900 hover:bg-gray-400 hover:scale-105 active:scale-95 ${visibleButtons.includes(index) ? 'animate-[slideIn_0.6s_ease-out_forwards]' : 'opacity-0'}`}
+                  >
+                    {button.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+          {showCatContent && (
+            <div className={`cat-content ${isCatContentVisible ? 'show' : ''}`} style={{ backgroundColor: Telegram.WebApp.themeParams.secondary_bg_color || '#f1f5f9' }}>
               <img src={catImage} alt="Изображение котика" className="cat-image" />
-              <p className="cat-fact" style={{ color: '#1f2937' }}>{catFact}</p>
+              <p className="cat-fact" style={{ color: Telegram.WebApp.themeParams.text_color || '#1f2937' }}>{catFact}</p>
               <div className="button-container">
                 <button
                   onClick={fetchCatContent}
                   className="cat-button"
                   style={{
-                    backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
-                    color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
+                    backgroundColor: Telegram.WebApp.themeParams.button_color || '#d1d5db',
+                    color: Telegram.WebApp.themeParams.button_text_color || '#1f2937',
                   }}
                 >
                   Показать котика!
@@ -245,8 +248,8 @@
                   onClick={handleBack}
                   className="back-button"
                   style={{
-                    backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
-                    color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
+                    backgroundColor: Telegram.WebApp.themeParams.button_color || '#d1d5db',
+                    color: Telegram.WebApp.themeParams.button_text_color || '#1f2937',
                   }}
                 >
                   Назад
@@ -254,7 +257,6 @@
               </div>
             </div>
           )}
-
           <button
             onClick={() => window.Telegram?.WebApp?.openTelegramLink('https://t.me/nkego')}
             className="telegram-link bg-gray-200 text-gray-900 hover:bg-gray-300 hover:scale-110 active:scale-90 animate-[fadeIn_0.8s_ease-out_forwards]"
