@@ -1,0 +1,172 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telegram Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.25.6/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .dynamic-bg {
+      background: linear-gradient(45deg, #e2e8f0, #f1f5f9, #e2e8f0, #f1f5f9);
+      background-size: 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+    .dynamic-bg-dark {
+      background: linear-gradient(45deg, #1f2937, #374151, #1f2937, #374151);
+      background-size: 400%;
+      animation: gradientShift 15s ease infinite;
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    @keyframes slideIn {
+      0% { opacity: 0; transform: translateY(-100px) rotate(-10deg); }
+      70% { transform: translateY(10px) rotate(2deg); }
+      100% { opacity: 1; transform: translateY(0) rotate(0); }
+    }
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(-50px) scale(0.8); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const buttons = [
+      { name: "Google", url: "https://www.google.com" },
+      { name: "GitHub", url: "https://github.com" },
+      { name: "X", url: "https://x.com" },
+      { name: "YouTube", url: "https://youtube.com" },
+      { name: "Wikipedia", url: "https://wikipedia.org" },
+    ];
+
+    const App = () => {
+      const [isDark, setIsDark] = useState(Telegram.WebApp.themeParams.bg_color?.startsWith('#0') || false);
+      const [visibleButtons, setVisibleButtons] = useState([]);
+
+      useEffect(() => {
+        Telegram.WebApp.ready();
+        buttons.forEach((_, index) => {
+          setTimeout(() => {
+            setVisibleButtons((prev) => [...prev, index]);
+          }, index * 300);
+        });
+      }, []);
+
+      const toggleTheme = () => {
+        setIsDark(!isDark);
+      };
+
+      const openLink = (url) => {
+        if (Telegram.WebApp.isVersionAtLeast('6.0')) {
+          Telegram.WebApp.openLink(url, { tryInstantView: true });
+        } else {
+          window.open(url, '_blank');
+        }
+      };
+
+      return (
+        <div className={`min-h-screen flex flex-col items-center justify-center p-4 relative transition-colors duration-500 ${isDark ? 'dynamic-bg-dark text-gray-100' : 'dynamic-bg text-gray-900'}`}>
+          <button
+            onClick={toggleTheme}
+            className={`absolute top-4 right-4 py-2 px-4 rounded-lg font-semibold transition-all duration-300 ${
+              isDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 hover:scale-110 active:scale-90' : 'bg-gray-200 text-gray-900 hover:bg-gray-300 hover:scale-110 active:scale-90'
+            } animate-[fadeIn_0.8s_ease-out_forwards]`}
+            style={{ animationDelay: '0.6s' }}
+          >
+            {isDark ? 'Светлая тема' : 'Темная тема'}
+          </button>
+
+          <h1
+            className={`text-4xl font-bold mb-8 ${isDark ? 'text-gray-300' : 'text-gray-700'} animate-[fadeIn_1s_ease-out_forwards]`}
+          >
+            Добро пожаловать!
+          </h1>
+
+          <div className="space-y-4 w-full max-w-xs">
+            {buttons.map((button, index) => (
+              <button
+                key={button.name}
+                onClick={() => openLink(button.url)}
+                className={`block w-full py-3 px-6 text-center rounded-lg font-semibold text-lg shadow-lg transition-all duration-300 ${
+                  isDark
+                    ? 'bg-gray-600 text-gray-100 hover:bg-gray-500 hover:scale-105 active:scale-95'
+                    : 'bg-gray-300 text-gray-900 hover:bg-gray-400 hover:scale-105 active:scale-95'
+                } ${visibleButtons.includes(index) ? 'animate-[slideIn_0.6s_ease-out_forwards]' : 'opacity-0'}`}
+              >
+                {button.name}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => openLink('https://t.me/your_telegram_handle')} // Замените на реальную ссылку Telegram автора
+            className={`absolute bottom-4 right-4 py-2 px-4 rounded-lg font-semibold transition-all duration-300 ${
+              isDark ? 'bg-gray-700 text-gray-100 hover:bg-gray-600 hover:scale-110 active:scale-90' : 'bg-gray-200 text-gray-900 hover:bg-gray-300 hover:scale-110 active:scale-90'
+            } animate-[fadeIn_0.8s_ease-out_forwards]`}
+            style={{ animationDelay: '1.5s' }}
+          >
+            Telegram автора
+          </button>
+        </div>
+      );
+    };
+
+    try {
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    } catch (error) {
+      console.error('Ошибка рендеринга:', error);
+      document.getElementById('root').innerHTML = '<h1 style="color: red; text-align: center;">Ошибка загрузки приложения. Проверьте консоль браузера.</h1>';
+    }
+  </script>
+</body>
+</html>
