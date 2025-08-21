@@ -12,6 +12,10 @@
   <script src="https://telegram.org/js/telegram-web-app.js?58"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    body {
+      padding: var(--tg-safe-area-inset-top, 0) var(--tg-safe-area-inset-right, 0)
+              var(--tg-safe-area-inset-bottom, 0) var(--tg-safe-area-inset-left, 0);
+    }
     .dynamic-bg {
       background: linear-gradient(45deg, #e2e8f0, #f1f5f9, #e2e8f0, #f1f5f9);
       background-size: 400%;
@@ -33,10 +37,10 @@
     }
     .cat-content {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      top: var(--tg-safe-area-inset-top, 0);
+      left: var(--tg-safe-area-inset-left, 0);
+      width: calc(100vw - var(--tg-safe-area-inset-left, 0) - var(--tg-safe-area-inset-right, 0));
+      height: calc(100vh - var(--tg-safe-area-inset-top, 0) - var(--tg-safe-area-inset-bottom, 0));
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -46,7 +50,6 @@
       transform: scale(0.8);
       transition: opacity 0.5s ease, transform 0.5s ease;
       padding: 10px;
-      background-color: #f1f5f9;
     }
     .cat-content.show {
       opacity: 1;
@@ -78,14 +81,14 @@
     }
     .button-container {
       position: fixed;
-      bottom: 20px;
+      bottom: calc(20px + var(--tg-safe-area-inset-bottom, 0));
       display: flex;
       gap: 10px;
     }
     .telegram-link {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
+      bottom: calc(20px + var(--tg-safe-area-inset-bottom, 0));
+      right: calc(20px + var(--tg-safe-area-inset-right, 0));
       font-size: 16px;
       padding: 10px 20px;
     }
@@ -166,11 +169,18 @@
       }, []);
 
       const updateTheme = () => {
-        document.body.style.backgroundColor = Telegram.WebApp.themeParams.bg_color || '#e2e8f0';
-        document.body.style.color = Telegram.WebApp.themeParams.text_color || '#1f2937';
+        const bgColor = Telegram.WebApp.themeParams.bg_color || '#e2e8f0';
+        const textColor = Telegram.WebApp.themeParams.text_color || '#1f2937';
+        const buttonColor = Telegram.WebApp.themeParams.button_color || '#d1d5db';
+        const buttonTextColor = Telegram.WebApp.themeParams.button_text_color || '#1f2937';
+        const secondaryBgColor = Telegram.WebApp.themeParams.secondary_bg_color || '#f1f5f9';
+        const hintColor = Telegram.WebApp.themeParams.hint_color || '#6b7280';
+
+        document.body.style.backgroundColor = bgColor;
+        document.body.style.color = textColor;
         const content = document.querySelector('.cat-content');
         if (content) {
-          content.style.backgroundColor = Telegram.WebApp.themeParams.secondary_bg_color || '#f1f5f9';
+          content.style.backgroundColor = secondaryBgColor;
         }
       };
 
@@ -208,11 +218,12 @@
       };
 
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4 relative transition-colors duration-500 dynamic-bg text-gray-900">
+        <div className="min-h-screen flex flex-col items-center justify-center p-4 relative transition-colors duration-500">
           {!showCatContent && (
             <>
               <h1
-                className="text-4xl font-bold mb-8 text-gray-700 animate-[fadeIn_1s_ease-out_forwards]"
+                className="text-4xl font-bold mb-8 animate-[fadeIn_1s_ease-out_forwards]"
+                style={{ color: window.Telegram?.WebApp?.themeParams.hint_color || '#6b7280' }}
               >
                 N
               </h1>
@@ -221,7 +232,11 @@
                   <button
                     key={button.name}
                     onClick={button.url ? () => window.open(button.url, '_blank', 'noopener,noreferrer') : handleCatButtonClick}
-                    className={`block w-full py-3 px-6 text-center rounded-lg font-semibold text-lg shadow-lg transition-all duration-300 bg-gray-300 text-gray-900 hover:bg-gray-400 hover:scale-105 active:scale-95 ${visibleButtons.includes(index) ? 'animate-[slideIn_0.6s_ease-out_forwards]' : 'opacity-0'}`}
+                    className={`block w-full py-3 px-6 text-center rounded-lg font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 ${visibleButtons.includes(index) ? 'animate-[slideIn_0.6s_ease-out_forwards]' : 'opacity-0'}`}
+                    style={{
+                      backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
+                      color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
+                    }}
                   >
                     {button.name}
                   </button>
@@ -230,16 +245,16 @@
             </>
           )}
           {showCatContent && (
-            <div className={`cat-content ${isCatContentVisible ? 'show' : ''}`} style={{ backgroundColor: Telegram.WebApp.themeParams.secondary_bg_color || '#f1f5f9' }}>
+            <div className={`cat-content ${isCatContentVisible ? 'show' : ''}`} style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.secondary_bg_color || '#f1f5f9' }}>
               <img src={catImage} alt="Изображение котика" className="cat-image" />
-              <p className="cat-fact" style={{ color: Telegram.WebApp.themeParams.text_color || '#1f2937' }}>{catFact}</p>
+              <p className="cat-fact" style={{ color: window.Telegram?.WebApp?.themeParams.text_color || '#1f2937' }}>{catFact}</p>
               <div className="button-container">
                 <button
                   onClick={fetchCatContent}
                   className="cat-button"
                   style={{
-                    backgroundColor: Telegram.WebApp.themeParams.button_color || '#d1d5db',
-                    color: Telegram.WebApp.themeParams.button_text_color || '#1f2937',
+                    backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
+                    color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
                   }}
                 >
                   Показать котика!
@@ -248,8 +263,8 @@
                   onClick={handleBack}
                   className="back-button"
                   style={{
-                    backgroundColor: Telegram.WebApp.themeParams.button_color || '#d1d5db',
-                    color: Telegram.WebApp.themeParams.button_text_color || '#1f2937',
+                    backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
+                    color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
                   }}
                 >
                   Назад
@@ -259,8 +274,12 @@
           )}
           <button
             onClick={() => window.Telegram?.WebApp?.openTelegramLink('https://t.me/nkego')}
-            className="telegram-link bg-gray-200 text-gray-900 hover:bg-gray-300 hover:scale-110 active:scale-90 animate-[fadeIn_0.8s_ease-out_forwards]"
-            style={{ animationDelay: '1.5s' }}
+            className="telegram-link hover:scale-110 active:scale-90 animate-[fadeIn_0.8s_ease-out_forwards]"
+            style={{
+              backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
+              color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
+              animationDelay: '1.5s',
+            }}
           >
             N
           </button>
