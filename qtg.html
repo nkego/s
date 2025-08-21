@@ -252,10 +252,6 @@
       font-weight: 500;
     }
 
-    #quizOptions.fade-out, #flagQuizOptions.fade-out {
-      animation: fade-out 0.3s ease-out forwards;
-    }
-
     #errorBoundary {
       background-color: var(--suggestions-bg);
       border: 1px solid var(--error-text);
@@ -531,7 +527,7 @@
 
       const startQuiz = () => {
         try {
-          console.log('Starting quiz');
+          console.log('Starting quiz, resetting options');
           setQuizQuestion(null);
           setQuizOptions([]);
           const countryKeys = Object.keys(countries);
@@ -560,7 +556,12 @@
             .sort(() => Math.random() - 0.5)
             .slice(0, 1);
           const options = [correctCapital, ...wrongCapitals].sort(() => Math.random() - 0.5);
-          setQuizOptions(options.map(option => ({ text: option, correct: option === correctCapital })));
+          setQuizOptions(options.map(option => ({
+            text: option,
+            correct: option === correctCapital,
+            className: 'quiz-option',
+            disabled: false
+          })));
         } catch (error) {
           console.error('Error in startQuiz:', error);
           setQuizQuestion({ error: true, message: 'Error starting quiz' });
@@ -701,7 +702,7 @@
 
       const startFlagQuiz = () => {
         try {
-          console.log('Starting flag quiz');
+          console.log('Starting flag quiz, resetting options');
           setFlagQuizQuestion(null);
           setFlagQuizOptions([]);
           const countryKeys = Object.keys(countries);
@@ -730,7 +731,12 @@
             .sort(() => Math.random() - 0.5)
             .slice(0, 1);
           const options = [correctCountry, ...wrongCountries].sort(() => Math.random() - 0.5);
-          setFlagQuizOptions(options.map(option => ({ text: option, correct: option === correctCountry })));
+          setFlagQuizOptions(options.map(option => ({
+            text: option,
+            correct: option === correctCountry,
+            className: 'quiz-option',
+            disabled: false
+          })));
         } catch (error) {
           console.error('Error in startFlagQuiz:', error);
           setFlagQuizQuestion({ error: true, message: 'Error starting flag quiz' });
