@@ -235,6 +235,10 @@
       transition: transform 0.1s ease;
     }
 
+    .quiz-option:focus {
+      outline: none;
+    }
+
     .quiz-option.correct {
       background-color: var(--quiz-correct-bg);
       color: var(--button-text);
@@ -564,6 +568,13 @@
             className: 'quiz-option',
             disabled: false
           })));
+          // Ensure no button is focused or active on render
+          setTimeout(() => {
+            document.querySelectorAll('#quizOptions button').forEach(button => {
+              button.blur();
+            });
+            console.log('Ensured no buttons are focused on quiz start');
+          }, 0);
         } catch (error) {
           console.error('Error in startQuiz:', error);
           setQuizQuestion({ error: true, message: 'Error starting quiz' });
@@ -598,6 +609,10 @@
                   className: `quiz-option ${option.text === selected ? (option.correct ? 'correct fade-out' : 'incorrect fade-out') : (option.correct ? 'correct fade-out' : 'fade-out')}`
                 }))
               );
+              // Clear focus from all buttons
+              document.querySelectorAll('#quizOptions button').forEach(button => {
+                button.blur();
+              });
               if (selected === quizOptions.find(opt => opt.correct).text) {
                 setCorrectAnswers(prev => {
                   const newCount = prev + 1;
@@ -754,6 +769,13 @@
             className: 'quiz-option',
             disabled: false
           })));
+          // Ensure no button is focused or active on render
+          setTimeout(() => {
+            document.querySelectorAll('#flagQuizOptions button').forEach(button => {
+              button.blur();
+            });
+            console.log('Ensured no buttons are focused on flag quiz start');
+          }, 0);
         } catch (error) {
           console.error('Error in startFlagQuiz:', error);
           setFlagQuizQuestion({ error: true, message: 'Error starting flag quiz' });
@@ -788,6 +810,10 @@
                   className: `quiz-option ${option.text === selected ? (option.correct ? 'correct fade-out' : 'incorrect fade-out') : (option.correct ? 'correct fade-out' : 'fade-out')}`
                 }))
               );
+              // Clear focus from all buttons
+              document.querySelectorAll('#flagQuizOptions button').forEach(button => {
+                button.blur();
+              });
               if (selected === flagQuizOptions.find(opt => opt.correct).text) {
                 setFlagCorrectAnswers(prev => {
                   const newCount = prev + 1;
