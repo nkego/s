@@ -61,24 +61,30 @@
             border: none;
             border-radius: 5px;
             transition: transform 0.2s, background-color 0.3s, color 0.3s;
-            background-color: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
-        #bottom-button:hover, #telegram-link:hover {
-            transform: scale(1.1);
-            background-color: var(--tg-theme-accent-text-color);
-        }
         #bottom-button {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
             position: fixed;
             bottom: calc(20px + var(--tg-safe-area-inset-bottom));
         }
         #telegram-link {
+            background-color: transparent;
+            color: var(--tg-theme-button-text-color);
             position: fixed;
             bottom: calc(20px + var(--tg-safe-area-inset-bottom));
             right: calc(20px + var(--tg-safe-area-inset-right));
             font-size: 16px;
             padding: 10px 20px;
+        }
+        #bottom-button:hover {
+            transform: scale(1.1);
+            background-color: var(--tg-theme-accent-text-color);
+        }
+        #telegram-link:hover {
+            transform: scale(1.1);
+            color: var(--tg-theme-accent-text-color);
         }
     </style>
 </head>
@@ -116,7 +122,6 @@
             document.getElementById('content').style.backgroundColor = Telegram.WebApp.themeParams.secondary_bg_color;
             document.getElementById('bottom-button').style.backgroundColor = Telegram.WebApp.themeParams.button_color;
             document.getElementById('bottom-button').style.color = Telegram.WebApp.themeParams.button_text_color;
-            document.getElementById('telegram-link').style.backgroundColor = Telegram.WebApp.themeParams.button_color;
             document.getElementById('telegram-link').style.color = Telegram.WebApp.themeParams.button_text_color;
         }
 
