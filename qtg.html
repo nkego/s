@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Найдите столицу любой страны, проверьте свои знания в викторине по столицам или угадайте страну по флагу.">
   <title>Столицы стран</title>
+  <script src="https://telegram.org/js/telegram-web-app.js" onerror="console.error('Failed to load Telegram WebApp script'); alert('Error: Failed to load Telegram WebApp. Check your connection.');"></script>
   <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" onerror="console.error('Failed to load React script'); alert('Error: Failed to load React. Check your connection.');"></script>
   <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" onerror="console.error('Failed to load ReactDOM script'); alert('Error: Failed to load ReactDOM. Check your connection.');"></script>
   <script src="https://cdn.tailwindcss.com" onerror="console.error('Failed to load Tailwind CSS script'); alert('Error: Failed to load Tailwind CSS. Check your connection.');"></script>
@@ -279,6 +280,20 @@
   <div id="root" class="container w-full max-w-sm p-4"></div>
 
   <script>
+    // Initialize Telegram WebApp
+    try {
+      if (!window.Telegram || !window.Telegram.WebApp) {
+        console.warn('Telegram WebApp not loaded. Using fallback colors.');
+      } else {
+        console.log('Telegram WebApp loaded, version:', window.Telegram.WebApp.version);
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+      }
+    } catch (error) {
+      console.error('Error initializing Telegram WebApp:', error);
+      alert('Error initializing Telegram WebApp. Check console.');
+    }
+
     // Check React and ReactDOM dependencies
     try {
       if (!window.React || !window.ReactDOM) {
@@ -345,6 +360,8 @@
     }
 
     function SearchTab({ lang, result, setResult, countryInfo, setCountryInfo, countryInput, setCountryInput, suggestions, setSuggestions }) {
+      const tg = window.Telegram?.WebApp;
+
       const handleInput = (e) => {
         try {
           const input = e.target.value;
@@ -397,17 +414,31 @@
               population: country.population,
               language: country.language
             });
-            console.log('Capital found:', capital);
-            alert(`${lang === 'ru' ? 'Столица найдена' : 'Capital found'}: ${capital}`);
+            if (tg && typeof tg.showAlert === 'function') {
+              console.log('Calling showAlert for found capital:', capital);
+              tg.showAlert(`${lang === 'ru' ? 'Столица найдена' : 'Capital found'}: ${capital}`);
+            } else {
+              console.warn('showAlert not available, using standard alert');
+              alert(`${lang === 'ru' ? 'Столица найдена' : 'Capital found'}: ${capital}`);
+            }
           } else {
             setResult({ error: true, message: lang === 'ru' ? 'Страна не найдена' : 'Country not found' });
-            console.log('Country not found:', input);
-            alert(lang === 'ru' ? 'Страна не найдена' : 'Country not found');
+            if (tg && typeof tg.showAlert === 'function') {
+              console.log('Calling showAlert for error: Country not found');
+              tg.showAlert(lang === 'ru' ? 'Страна не найдена' : 'Country not found');
+            } else {
+              console.warn('showAlert not available, using standard alert');
+              alert(lang === 'ru' ? 'Страна не найдена' : 'Country not found');
+            }
           }
         } catch (error) {
           console.error('Error in findCapital:', error);
           setResult({ error: true, message: 'Error processing request' });
-          alert('Error processing request');
+          if (tg && typeof tg.showAlert === 'function') {
+            tg.showAlert('Error processing request');
+          } else {
+            alert('Error processing request');
+          }
         }
       };
 
@@ -502,6 +533,7 @@
       const [quizOptions, setQuizOptions] = React.useState([]);
       const [showNext, setShowNext] = React.useState(false);
       const [isTransitioning, setIsTransitioning] = React.useState(false);
+      const tg = window.Telegram?.WebApp;
 
       const startQuiz = () => {
         try {
@@ -513,8 +545,13 @@
           const countryKeys = Object.keys(countries);
           if (countryKeys.length < 2) {
             setQuizQuestion({ error: true, message: lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries' });
-            console.log('Not enough countries for quiz');
-            alert(lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries');
+            if (tg && typeof tg.showAlert === 'function') {
+              console.log('Calling showAlert for error: Not enough countries');
+              tg.showAlert(lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries');
+            } else {
+              console.warn('showAlert not available, using standard alert');
+              alert(lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries');
+            }
             setIsTransitioning(false);
             return;
           }
@@ -538,7 +575,11 @@
           console.error('Error in startQuiz:', error);
           setQuizQuestion({ error: true, message: 'Error starting quiz' });
           setIsTransitioning(false);
-          alert('Error starting quiz');
+          if (tg && typeof tg.showAlert === 'function') {
+            tg.showAlert('Error starting quiz');
+          } else {
+            alert('Error starting quiz');
+          }
         }
       };
 
@@ -558,22 +599,36 @@
               localStorage.setItem('correctAnswers', newCount);
               return newCount;
             });
-            console.log('Correct answer');
-            alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+            if (tg && typeof tg.showAlert === 'function') {
+              console.log('Calling showAlert for correct answer');
+              tg.showAlert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+            } else {
+              console.warn('showAlert not available, using standard alert');
+              alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+            }
           } else {
             setIncorrectAnswers(prev => {
               const newCount = prev + 1;
               localStorage.setItem('incorrectAnswers', newCount);
               return newCount;
             });
-            console.log('Incorrect answer');
-            alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+            if (tg && typeof tg.showAlert === 'function') {
+              console.log('Calling showAlert for incorrect answer');
+              tg.showAlert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+            } else {
+              console.warn('showAlert not available, using standard alert');
+              alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+            }
           }
           setShowNext(true);
           console.log('showNext after:', true);
         } catch (error) {
           console.error('Error in checkAnswer:', error);
-          alert('Error processing answer');
+          if (tg && typeof tg.showAlert === 'function') {
+            tg.showAlert('Error processing answer');
+          } else {
+            alert('Error processing answer');
+          }
         }
       };
 
@@ -662,6 +717,7 @@
       const [flagQuizOptions, setFlagQuizOptions] = React.useState([]);
       const [showNext, setShowNext] = React.useState(false);
       const [isTransitioning, setIsTransitioning] = React.useState(false);
+      const tg = window.Telegram?.WebApp;
 
       const startFlagQuiz = () => {
         try {
@@ -673,8 +729,13 @@
           const countryKeys = Object.keys(countries);
           if (countryKeys.length < 2) {
             setFlagQuizQuestion({ error: true, message: lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries' });
-            console.log('Not enough countries for flag quiz');
-            alert(lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries');
+            if (tg && typeof tg.showAlert === 'function') {
+              console.log('Calling showAlert for error: Not enough countries');
+              tg.showAlert(lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries');
+            } else {
+              console.warn('showAlert not available, using standard alert');
+              alert(lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries');
+            }
             setIsTransitioning(false);
             return;
           }
@@ -698,7 +759,11 @@
           console.error('Error in startFlagQuiz:', error);
           setFlagQuizQuestion({ error: true, message: 'Error starting flag quiz' });
           setIsTransitioning(false);
-          alert('Error starting flag quiz');
+          if (tg && typeof tg.showAlert === 'function') {
+            tg.showAlert('Error starting flag quiz');
+          } else {
+            alert('Error starting flag quiz');
+          }
         }
       };
 
@@ -718,22 +783,36 @@
               localStorage.setItem('flagCorrectAnswers', newCount);
               return newCount;
             });
-            console.log('Correct answer');
-            alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+            if (tg && typeof tg.showAlert === 'function') {
+              console.log('Calling showAlert for correct answer');
+              tg.showAlert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+            } else {
+              console.warn('showAlert not available, using standard alert');
+              alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+            }
           } else {
             setFlagIncorrectAnswers(prev => {
               const newCount = prev + 1;
               localStorage.setItem('flagIncorrectAnswers', newCount);
               return newCount;
             });
-            console.log('Incorrect answer');
-            alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+            if (tg && typeof tg.showAlert === 'function') {
+              console.log('Calling showAlert for incorrect answer');
+              tg.showAlert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+            } else {
+              console.warn('showAlert not available, using standard alert');
+              alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+            }
           }
           setShowNext(true);
           console.log('showNext after:', true);
         } catch (error) {
           console.error('Error in checkAnswer:', error);
-          alert('Error processing answer');
+          if (tg && typeof tg.showAlert === 'function') {
+            tg.showAlert('Error processing answer');
+          } else {
+            alert('Error processing answer');
+          }
         }
       };
 
@@ -818,6 +897,7 @@
     }
 
     function App() {
+      const tg = window.Telegram?.WebApp;
       const [lang, setLang] = React.useState(localStorage.getItem('language') || 'ru');
       const [activeTab, setActiveTab] = React.useState(localStorage.getItem('activeTab') || 'search');
       const [countryInput, setCountryInput] = React.useState('');
@@ -828,6 +908,56 @@
       const [incorrectAnswers, setIncorrectAnswers] = React.useState(parseInt(localStorage.getItem('incorrectAnswers')) || 0);
       const [flagCorrectAnswers, setFlagCorrectAnswers] = React.useState(parseInt(localStorage.getItem('flagCorrectAnswers')) || 0);
       const [flagIncorrectAnswers, setFlagIncorrectAnswers] = React.useState(parseInt(localStorage.getItem('flagIncorrectAnswers')) || 0);
+
+      const updateTheme = () => {
+        try {
+          if (!tg || !tg.themeParams) {
+            console.warn('Telegram WebApp or themeParams not available, using default colors');
+            return;
+          }
+          const themeParams = tg.themeParams || {};
+          console.log('Theme parameters:', themeParams);
+          document.documentElement.style.setProperty('--bg-color', themeParams.bg_color || '#ffffff');
+          document.documentElement.style.setProperty('--text-color', themeParams.text_color || '#000000');
+          document.documentElement.style.setProperty('--input-bg', themeParams.secondary_bg_color || '#ffffff');
+          document.documentElement.style.setProperty('--input-border', themeParams.hint_color || '#d1d5db');
+          document.documentElement.style.setProperty('--button-bg', themeParams.button_color || '#3390ec');
+          document.documentElement.style.setProperty('--button-text', themeParams.button_text_color || '#ffffff');
+          document.documentElement.style.setProperty('--button-hover', themeParams.button_color ? (themeParams.button_color + 'cc') : '#2563eb');
+          document.documentElement.style.setProperty('--suggestions-bg', themeParams.secondary_bg_color || '#ffffff');
+          document.documentElement.style.setProperty('--suggestions-border', themeParams.hint_color || '#d1d5db');
+          document.documentElement.style.setProperty('--suggestions-hover', themeParams.hint_color ? (themeParams.hint_color + '33') : '#f3f4f6');
+          document.documentElement.style.setProperty('--theme-button-bg', themeParams.secondary_bg_color || '#e5e7eb');
+          document.documentElement.style.setProperty('--theme-button-text', themeParams.text_color || '#374151');
+          document.documentElement.style.setProperty('--error-text', themeParams.destructive_text_color || '#ef4444');
+          document.documentElement.style.setProperty('--success-text', themeParams.accent_text_color || '#10b981');
+          document.documentElement.style.setProperty('--quiz-button-bg', themeParams.button_color || '#3390ec');
+          document.documentElement.style.setProperty('--quiz-button-hover', themeParams.button_color ? (themeParams.button_color + 'cc') : '#2563eb');
+          document.documentElement.style.setProperty('--quiz-button-active', themeParams.button_color ? (themeParams.button_color + '99') : '#1e40af');
+          document.documentElement.style.setProperty('--quiz-correct-bg', themeParams.accent_text_color || '#10b981');
+          document.documentElement.style.setProperty('--quiz-incorrect-bg', themeParams.destructive_text_color || '#ef4444');
+        } catch (error) {
+          console.error('Error in updateTheme:', error);
+        }
+      };
+
+      React.useEffect(() => {
+        try {
+          console.log('Initializing app, Telegram WebApp version:', tg?.version);
+          updateTheme();
+          if (tg) {
+            tg.onEvent('themeChanged', () => {
+              console.log('themeChanged event');
+              updateTheme();
+            });
+            return () => {
+              tg.offEvent('themeChanged', updateTheme);
+            };
+          }
+        } catch (error) {
+          console.error('Error in useEffect:', error);
+        }
+      }, []);
 
       const toggleLanguage = () => {
         try {
@@ -846,11 +976,20 @@
           setResult(null);
           setCountryInfo(null);
           setSuggestions([]);
-          console.log('Language changed to:', newLang);
-          alert(`Language: ${newLang === 'ru' ? 'Русский' : 'English'}`);
+          if (tg && typeof tg.showAlert === 'function') {
+            console.log('Calling showAlert for language change:', newLang);
+            tg.showAlert(`Language: ${newLang === 'ru' ? 'Русский' : 'English'}`);
+          } else {
+            console.warn('showAlert not available, using standard alert');
+            alert(`Language: ${newLang === 'ru' ? 'Русский' : 'English'}`);
+          }
         } catch (error) {
           console.error('Error in toggleLanguage:', error);
-          alert('Error changing language');
+          if (tg && typeof tg.showAlert === 'function') {
+            tg.showAlert('Error changing language');
+          } else {
+            alert('Error changing language');
+          }
         }
       };
 
