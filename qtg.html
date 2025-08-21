@@ -1,0 +1,187 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Случайные цитаты</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        .quote-slide {
+            animation: fadeIn 0.5s ease-in-out;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .telegram-btn {
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div id="quoteWrapper" class="p-6 rounded-xl shadow-lg max-w-lg w-full text-center">
+        <h1 class="text-2xl font-semibold mb-4">Случайные цитаты</h1>
+        <div id="quoteContainer" class="space-y-4">
+            <div class="quote-slide">
+                <p id="quote-0" class="text-lg italic">"Нажмите кнопку, чтобы получить цитату."</p>
+                <p id="author-0" class="text-sm font-medium">— Автор</p>
+            </div>
+        </div>
+        <div class="flex justify-between mt-6">
+            <button id="prevQuoteBtn" class="px-4 py-2 rounded-lg transition disabled:opacity-50">
+                Предыдущая
+            </button>
+            <button id="newQuoteBtn" class="text-white px-4 py-2 rounded-lg transition flex items-center">
+                <span id="btnText">Новая цитата</span>
+                <svg id="loadingIcon" class="w-5 h-5 ml-2 hidden spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12a8 8 0 0116 0 8 8 0 01-16 0z" />
+                </svg>
+            </button>
+        </div>
+        <p id="error" class="text-red-500 text-sm mt-4 hidden">Не удалось загрузить цитату. Попробуйте снова.</p>
+    </div>
+    <a id="telegramBtn" href="https://t.me/your_telegram_handle" target="_blank" class="fixed bottom-4 right-4 telegram-btn transition">
+        Telegram
+    </a>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+
+        let quotes = [];
+        let currentIndex = 0;
+        const maxQuotes = 5;
+
+        function applyTheme() {
+            const theme = tg.themeParams;
+            document.body.style.backgroundColor = theme.bg_color || '#f3f4f6';
+            document.body.style.color = theme.text_color || '#1f2937';
+            const quoteWrapper = document.getElementById('quoteWrapper');
+            quoteWrapper.style.backgroundColor = theme.secondary_bg_color || '#ffffff';
+            quoteWrapper.style.color = theme.text_color || '#1f2937';
+            document.getElementById('prevQuoteBtn').style.backgroundColor = theme.secondary_bg_color || '#e5e7eb';
+            document.getElementById('prevQuoteBtn').style.color = theme.text_color || '#1f2937';
+            document.getElementById('prevQuoteBtn').classList.add('hover:bg-gray-300');
+            document.getElementById('newQuoteBtn').style.backgroundColor = theme.button_color || '#3b82f6';
+            document.getElementById('newQuoteBtn').style.color = theme.button_text_color || '#ffffff';
+            document.getElementById('newQuoteBtn').classList.add('hover:bg-blue-600');
+            document.getElementById('telegramBtn').style.backgroundColor = theme.secondary_bg_color || '#ffffff';
+            document.getElementById('telegramBtn').style.color = theme.text_color || '#1f2937';
+            document.getElementById('telegramBtn').classList.add('hover:bg-gray-100');
+            document.getElementById('quoteContainer').querySelector('p.text-sm').style.color = theme.hint_color || '#6b7280';
+        }
+
+        function getRandomQuote() {
+            document.getElementById('newQuoteBtn').disabled = true;
+            document.getElementById('btnText').textContent = 'Загрузка...';
+            document.getElementById('loadingIcon').classList.remove('hidden');
+            $.ajax({
+                url: 'https://api.forismatic.com/api/1.0/',
+                jsonp: 'jsonp',
+                dataType: 'jsonp',
+                data: {
+                    method: 'getQuote',
+                    lang: 'ru',
+                    format: 'jsonp'
+                },
+                success: function(response) {
+                    const quote = response.quoteText;
+                    const author = response.quoteAuthor || 'Аноним';
+                    quotes.push({ text: quote, author });
+                    if (quotes.length > maxQuotes) quotes.shift();
+                    currentIndex = quotes.length - 1;
+                    updateQuoteDisplay();
+                    document.getElementById('error').classList.add('hidden');
+                },
+                error: function() {
+                    document.getElementById('error').classList.remove('hidden');
+                },
+                complete: function() {
+                    document.getElementById('newQuoteBtn').disabled = false;
+                    document.getElementById('btnText').textContent = 'Новая цитата';
+                    document.getElementById('loadingIcon').classList.add('hidden');
+                }
+            });
+        }
+
+        function updateQuoteDisplay() {
+            const container = document.getElementById('quoteContainer');
+            container.innerHTML = '';
+            const { text, author } = quotes[currentIndex];
+            container.innerHTML = `
+                <div class="quote-slide">
+                    <p id="quote-${currentIndex}" class="text-lg italic">"${text}"</p>
+                    <p id="author-${currentIndex}" class="text-sm font-medium">${author}</p>
+                </div>
+            `;
+            document.getElementById('prevQuoteBtn').disabled = currentIndex === 0;
+            applyTheme();
+        }
+
+        document.getElementById('newQuoteBtn').addEventListener('click', getRandomQuote);
+        document.getElementById('prevQuoteBtn').addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateQuoteDisplay();
+            }
+        });
+
+        // Инициализация темы и обработка события смены темы
+        applyTheme();
+        tg.onEvent('themeChanged', applyTheme);
+        getRandomQuote();
+    </script>
+</body>
+</html>
