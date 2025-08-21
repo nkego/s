@@ -173,14 +173,13 @@
         const textColor = Telegram.WebApp.themeParams.text_color || '#1f2937';
         const buttonColor = Telegram.WebApp.themeParams.button_color || '#d1d5db';
         const buttonTextColor = Telegram.WebApp.themeParams.button_text_color || '#1f2937';
-        const secondaryBgColor = Telegram.WebApp.themeParams.secondary_bg_color || '#f1f5f9';
         const hintColor = Telegram.WebApp.themeParams.hint_color || '#6b7280';
 
         document.body.style.backgroundColor = bgColor;
         document.body.style.color = textColor;
         const content = document.querySelector('.cat-content');
         if (content) {
-          content.style.backgroundColor = secondaryBgColor;
+          content.style.backgroundColor = bgColor; // Match app's main background
         }
         const strips = document.querySelectorAll('.cat-top-strip, .cat-bottom-strip');
         strips.forEach(strip => {
@@ -258,7 +257,7 @@
             </>
           )}
           {showCatContent && (
-            <div className={`cat-content ${isCatContentVisible ? 'show' : ''}`} style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.secondary_bg_color || '#f1f5f9' }}>
+            <div className={`cat-content ${isCatContentVisible ? 'show' : ''}`} style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.bg_color || '#e2e8f0' }}>
               <div className="cat-top-strip" style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.bg_color || '#e2e8f0' }}></div>
               <img src={catImage} alt="Изображение котика" className="cat-image" />
               <p className="cat-fact" style={{ color: window.Telegram?.WebApp?.themeParams.text_color || '#1f2937' }}>{catFact}</p>
