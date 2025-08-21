@@ -16,20 +16,9 @@
       padding: var(--tg-safe-area-inset-top, 0) var(--tg-safe-area-inset-right, 0)
               var(--tg-safe-area-inset-bottom, 0) var(--tg-safe-area-inset-left, 0);
     }
-    .dynamic-bg {
-      background: linear-gradient(45deg, #e2e8f0, #f1f5f9, #e2e8f0, #f1f5f9);
-      background-size: 400%;
-      animation: gradientShift 15s ease infinite;
-    }
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    @keyframes slideIn {
-      0% { opacity: 0; transform: translateY(-100px) rotate(-10deg); }
-      70% { transform: translateY(10px) rotate(2deg); }
-      100% { opacity: 1; transform: translateY(0) rotate(0); }
+    @keyframes fadeInDown {
+      0% { opacity: 0; transform: translateY(-50px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
     @keyframes fadeIn {
       0% { opacity: 0; transform: translateY(-50px) scale(0.8); }
@@ -54,6 +43,20 @@
     .cat-content.show {
       opacity: 1;
       transform: scale(1);
+    }
+    .cat-top-strip, .cat-bottom-strip {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: var(--tg-safe-area-inset-top, 10px);
+      z-index: 10;
+    }
+    .cat-top-strip {
+      top: 0;
+    }
+    .cat-bottom-strip {
+      bottom: 0;
+      height: var(--tg-safe-area-inset-bottom, 10px);
     }
     .cat-image {
       width: 100%;
@@ -91,6 +94,7 @@
       right: calc(20px + var(--tg-safe-area-inset-right, 0));
       font-size: 16px;
       padding: 10px 20px;
+      background: transparent;
     }
     .cat-button:hover, .back-button:hover, .telegram-link:hover {
       transform: scale(1.1);
@@ -154,18 +158,18 @@
       const [isCatContentVisible, setIsCatContentVisible] = useState(false);
 
       useEffect(() => {
-        buttons.forEach((_, index) => {
-          setTimeout(() => {
-            setVisibleButtons((prev) => [...prev, index]);
-          }, index * 300);
-        });
-
         if (window.Telegram?.WebApp) {
           Telegram.WebApp.ready();
           Telegram.WebApp.expand();
           updateTheme();
           Telegram.WebApp.onEvent('themeChanged', updateTheme);
         }
+        // Initialize buttons as hidden, then show them after animation
+        buttons.forEach((_, index) => {
+          setTimeout(() => {
+            setVisibleButtons((prev) => [...prev, index]);
+          }, index * 300 + 600); // 600ms base delay to ensure animation completion
+        });
       }, []);
 
       const updateTheme = () => {
@@ -182,6 +186,10 @@
         if (content) {
           content.style.backgroundColor = secondaryBgColor;
         }
+        const strips = document.querySelectorAll('.cat-top-strip, .cat-bottom-strip');
+        strips.forEach(strip => {
+          strip.style.backgroundColor = secondaryBgColor;
+        });
       };
 
       const fetchCatContent = async () => {
@@ -232,20 +240,33 @@
                   <button
                     key={button.name}
                     onClick={button.url ? () => window.open(button.url, '_blank', 'noopener,noreferrer') : handleCatButtonClick}
-                    className={`block w-full py-3 px-6 text-center rounded-lg font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 ${visibleButtons.includes(index) ? 'animate-[slideIn_0.6s_ease-out_forwards]' : 'opacity-0'}`}
+                    className={`block w-full py-3 px-6 text-center rounded-lg font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 ${visibleButtons.includes(index) ? 'animate-[fadeInDown_0.6s_ease-out_forwards]' : 'opacity-0'}`}
                     style={{
                       backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
                       color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
+                      animationDelay: `${index * 0.3}s`,
+                      animationFillMode: 'forwards'
                     }}
                   >
                     {button.name}
                   </button>
                 ))}
               </div>
+              <button
+                onClick={() => window.Telegram?.WebApp?.openTelegramLink('https://t.me/nkego')}
+                className="telegram-link hover:scale-110 active:scale-90 animate-[fadeIn_0.8s_ease-out_forwards]"
+                style={{
+                  color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
+                  animationDelay: '1.5s',
+                }}
+              >
+                N
+              </button>
             </>
           )}
           {showCatContent && (
             <div className={`cat-content ${isCatContentVisible ? 'show' : ''}`} style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.secondary_bg_color || '#f1f5f9' }}>
+              <div className="cat-top-strip" style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.secondary_bg_color || '#f1f5f9' }}></div>
               <img src={catImage} alt="Изображение котика" className="cat-image" />
               <p className="cat-fact" style={{ color: window.Telegram?.WebApp?.themeParams.text_color || '#1f2937' }}>{catFact}</p>
               <div className="button-container">
@@ -270,19 +291,9 @@
                   Назад
                 </button>
               </div>
+              <div className="cat-bottom-strip" style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.secondary_bg_color || '#f1f5f9' }}></div>
             </div>
           )}
-          <button
-            onClick={() => window.Telegram?.WebApp?.openTelegramLink('https://t.me/nkego')}
-            className="telegram-link hover:scale-110 active:scale-90 animate-[fadeIn_0.8s_ease-out_forwards]"
-            style={{
-              backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
-              color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
-              animationDelay: '1.5s',
-            }}
-          >
-            N
-          </button>
         </div>
       );
     };
