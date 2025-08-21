@@ -10,6 +10,7 @@
   <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.25.6/babel.min.js"></script>
   <script src="https://telegram.org/js/telegram-web-app.js?58"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
@@ -20,7 +21,15 @@
       0% { opacity: 0; transform: translateY(-50px) scale(0.8); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
-    .cat-content {
+    @keyframes quoteFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .cat-content, .quote-content {
       position: fixed;
       top: var(--tg-safe-area-inset-top, 0);
       left: var(--tg-safe-area-inset-left, 0);
@@ -36,21 +45,21 @@
       transition: opacity 0.5s ease, transform 0.5s ease;
       padding: 10px;
     }
-    .cat-content.show {
+    .cat-content.show, .quote-content.show {
       opacity: 1;
       transform: scale(1);
     }
-    .cat-top-strip, .cat-bottom-strip {
+    .cat-top-strip, .cat-bottom-strip, .quote-top-strip, .quote-bottom-strip {
       position: absolute;
       left: 0;
       width: 100%;
       height: var(--tg-safe-area-inset-top, 10px);
       z-index: 10;
     }
-    .cat-top-strip {
+    .cat-top-strip, .quote-top-strip {
       top: 0;
     }
-    .cat-bottom-strip {
+    .cat-bottom-strip, .quote-bottom-strip {
       bottom: 0;
       height: var(--tg-safe-area-inset-bottom, 10px);
     }
@@ -69,7 +78,14 @@
       max-width: 600px;
       padding: 0 10px;
     }
-    .cat-button, .back-button, .telegram-link {
+    .quote-slide {
+      animation: quoteFadeIn 0.5s ease-in-out;
+      animation-fill-mode: forwards;
+    }
+    .spin {
+      animation: spin 1s linear infinite;
+    }
+    .cat-button, .back-button, .telegram-link, .quote-button, .prev-quote-button {
       padding: 15px 30px;
       font-size: 18px;
       cursor: pointer;
@@ -92,7 +108,7 @@
       padding: 10px 20px;
       background: transparent;
     }
-    .cat-button:hover, .back-button:hover, .telegram-link:hover {
+    .cat-button:hover, .back-button:hover, .telegram-link:hover, .quote-button:hover, .prev-quote-button:hover {
       transform: scale(1.1);
     }
   </style>
@@ -135,7 +151,7 @@
     const { useState, useEffect } = React;
 
     const buttons = [
-      { name: "Цитаты", url: "https://nkego.github.io/s/q.html" },
+      { name: "Цитаты", url: null },
       { name: "Котики", url: null },
       { name: "Страны", url: "https://nkego.github.io/s/c.html" },
       { name: "Регионы", url: "https://nkego.github.io/s/r.html" },
@@ -146,8 +162,106 @@
       "Кошки могут прыгать на высоту, превышающую их собственный рост в пять раз.",
     ];
 
+    const QuotesComponent = ({ onBack }) => {
+      const [quotes, setQuotes] = useState([{ text: "Нажмите кнопку, чтобы получить цитату.", author: "— Автор" }]);
+      const [currentIndex, setCurrentIndex] = useState(0);
+      const [isLoading, setIsLoading] = useState(false);
+      const [error, setError] = useState(false);
+      const maxQuotes = 5;
+
+      const getRandomQuote = () => {
+        setIsLoading(true);
+        setError(false);
+        $.ajax({
+          url: 'https://api.forismatic.com/api/1.0/',
+          jsonp: 'jsonp',
+          dataType: 'jsonp',
+          data: {
+            method: 'getQuote',
+            lang: 'ru',
+            format: 'jsonp'
+          },
+          success: function(response) {
+            const quote = response.quoteText;
+            const author = response.quoteAuthor || 'Аноним';
+            setQuotes(prev => {
+              const newQuotes = [...prev, { text: quote, author }];
+              if (newQuotes.length > maxQuotes) newQuotes.shift();
+              return newQuotes;
+            });
+            setCurrentIndex(quotes.length);
+          },
+          error: function() {
+            setError(true);
+          },
+          complete: function() {
+            setIsLoading(false);
+          }
+        });
+      };
+
+      const handlePrevQuote = () => {
+        if (currentIndex > 0) {
+          setCurrentIndex(currentIndex - 1);
+        }
+      };
+
+      return (
+        <div className={`quote-content ${quotes[currentIndex] ? 'show' : ''}`} style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.bg_color || '#e2e8f0' }}>
+          <div className="quote-top-strip" style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.bg_color || '#e2e8f0' }}></div>
+          <div className="p-6 rounded-xl shadow-lg max-w-lg w-full text-center" style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.secondary_bg_color || '#ffffff', color: window.Telegram?.WebApp?.themeParams.text_color || '#1f2937' }}>
+            <h1 className="text-2xl font-semibold mb-4">Случайные цитаты</h1>
+            <div className="space-y-4">
+              <div className="quote-slide">
+                <p className="text-lg italic">"{quotes[currentIndex].text}"</p>
+                <p className="text-sm font-medium" style={{ color: window.Telegram?.WebApp?.themeParams.hint_color || '#6b7280' }}>{quotes[currentIndex].author}</p>
+              </div>
+            </div>
+            <div className="flex justify-between mt-6">
+              <button
+                onClick={handlePrevQuote}
+                className="prev-quote-button px-4 py-2 rounded-lg transition disabled:opacity-50"
+                disabled={currentIndex === 0}
+                style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.secondary_bg_color || '#e5e7eb', color: window.Telegram?.WebApp?.themeParams.text_color || '#1f2937' }}
+              >
+                Предыдущая
+              </button>
+              <button
+                onClick={getRandomQuote}
+                className="quote-button text-white px-4 py-2 rounded-lg transition flex items-center"
+                disabled={isLoading}
+                style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#3b82f6', color: window.Telegram?.WebApp?.themeParams.button_text_color || '#ffffff' }}
+              >
+                <span>{isLoading ? 'Загрузка...' : 'Новая цитата'}</span>
+                {isLoading && (
+                  <svg className="w-5 h-5 ml-2 spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 12a8 8 0 0116 0 8 8 0 01-16 0z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {error && <p className="text-red-500 text-sm mt-4">Не удалось загрузить цитату. Попробуйте снова.</p>}
+            <div className="button-container">
+              <button
+                onClick={onBack}
+                className="back-button mt-4"
+                style={{
+                  backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
+                  color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
+                }}
+              >
+                Назад
+              </button>
+            </div>
+          </div>
+          <div className="quote-bottom-strip" style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.bg_color || '#e2e8f0' }}></div>
+        </div>
+      );
+    };
+
     const App = () => {
       const [showCatContent, setShowCatContent] = useState(false);
+      const [showQuoteContent, setShowQuoteContent] = useState(false);
       const [visibleButtons, setVisibleButtons] = useState([]);
       const [catImage, setCatImage] = useState('');
       const [catFact, setCatFact] = useState('');
@@ -155,35 +269,40 @@
 
       useEffect(() => {
         if (window.Telegram?.WebApp) {
-          Telegram.WebApp.ready();
-          Telegram.WebApp.expand();
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
           updateTheme();
-          Telegram.WebApp.onEvent('themeChanged', updateTheme);
+          window.Telegram.WebApp.onEvent('themeChanged', updateTheme);
         }
         // Sequentially add buttons in the exact order: Цитаты, Котики, Страны, Регионы, IP адрес
         buttons.forEach((_, index) => {
           setTimeout(() => {
             setVisibleButtons((prev) => [...prev, index]);
-          }, index * 400); // 400ms delay for each button to ensure clear sequential appearance
+          }, index * 400); // 400ms delay for each button
         });
       }, []);
 
       const updateTheme = () => {
-        const bgColor = Telegram.WebApp.themeParams.bg_color || '#e2e8f0';
-        const textColor = Telegram.WebApp.themeParams.text_color || '#1f2937';
-        const buttonColor = Telegram.WebApp.themeParams.button_color || '#d1d5db';
-        const buttonTextColor = Telegram.WebApp.themeParams.button_text_color || '#1f2937';
-        const hintColor = Telegram.WebApp.themeParams.hint_color || '#6b7280';
+        const bgColor = window.Telegram.WebApp.themeParams.bg_color || '#e2e8f0';
+        const textColor = window.Telegram.WebApp.themeParams.text_color || '#1f2937';
+        const buttonColor = window.Telegram.WebApp.themeParams.button_color || '#d1d5db';
+        const buttonTextColor = window.Telegram.WebApp.themeParams.button_text_color || '#1f2937';
+        const secondaryBgColor = window.Telegram.WebApp.themeParams.secondary_bg_color || '#f1f5f9';
+        const hintColor = window.Telegram.WebApp.themeParams.hint_color || '#6b7280';
 
         document.body.style.backgroundColor = bgColor;
         document.body.style.color = textColor;
-        const content = document.querySelector('.cat-content');
-        if (content) {
-          content.style.backgroundColor = bgColor; // Match app's main background
+        const catContent = document.querySelector('.cat-content');
+        if (catContent) {
+          catContent.style.backgroundColor = bgColor;
         }
-        const strips = document.querySelectorAll('.cat-top-strip, .cat-bottom-strip');
+        const quoteContent = document.querySelector('.quote-content');
+        if (quoteContent) {
+          quoteContent.style.backgroundColor = bgColor;
+        }
+        const strips = document.querySelectorAll('.cat-top-strip, .cat-bottom-strip, .quote-top-strip, .quote-bottom-strip');
         strips.forEach(strip => {
-          strip.style.backgroundColor = bgColor; // Match app's main background
+          strip.style.backgroundColor = bgColor;
         });
       };
 
@@ -208,21 +327,31 @@
 
       const handleCatButtonClick = () => {
         setShowCatContent(true);
+        setShowQuoteContent(false);
         fetchCatContent();
         if (window.Telegram?.WebApp) {
-          Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+        }
+      };
+
+      const handleQuoteButtonClick = () => {
+        setShowQuoteContent(true);
+        setShowCatContent(false);
+        if (window.Telegram?.WebApp) {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
         }
       };
 
       const handleBack = () => {
         setShowCatContent(false);
+        setShowQuoteContent(false);
         setCatImage('');
         setCatFact('');
       };
 
       return (
         <div className="min-h-screen flex flex-col items-center justify-center p-4 relative transition-colors duration-500">
-          {!showCatContent && (
+          {!showCatContent && !showQuoteContent && (
             <>
               <h1
                 className="text-4xl font-bold mb-8 animate-[fadeIn_1s_ease-out_forwards]"
@@ -234,7 +363,7 @@
                 {buttons.map((button, index) => visibleButtons.includes(index) && (
                   <button
                     key={button.name}
-                    onClick={button.url ? () => window.open(button.url, '_blank', 'noopener,noreferrer') : handleCatButtonClick}
+                    onClick={button.name === "Цитаты" ? handleQuoteButtonClick : button.url ? () => window.open(button.url, '_blank', 'noopener,noreferrer') : handleCatButtonClick}
                     className="block w-full py-3 px-6 text-center rounded-lg font-semibold text-lg shadow-lg transition-all duration-300 hover:scale-105 active:scale-95"
                     style={{
                       backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
@@ -285,6 +414,9 @@
               </div>
               <div className="cat-bottom-strip" style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.bg_color || '#e2e8f0' }}></div>
             </div>
+          )}
+          {showQuoteContent && (
+            <QuotesComponent onBack={handleBack} />
           )}
         </div>
       );
