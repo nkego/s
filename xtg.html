@@ -263,18 +263,18 @@
               </button>
             </div>
             {error && <p className="text-red-500 text-sm mt-4">Не удалось загрузить цитату. Попробуйте снова.</p>}
-            <div className="quote-button-container">
-              <button
-                onClick={onBack}
-                className="quote-back-button"
-                style={{
-                  backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
-                  color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
-                }}
-              >
-                Назад
-              </button>
-            </div>
+          </div>
+          <div className="quote-button-container">
+            <button
+              onClick={onBack}
+              className="quote-back-button"
+              style={{
+                backgroundColor: window.Telegram?.WebApp?.themeParams.button_color || '#d1d5db',
+                color: window.Telegram?.WebApp?.themeParams.button_text_color || '#1f2937',
+              }}
+            >
+              Назад
+            </button>
           </div>
           <div className="quote-bottom-strip" style={{ backgroundColor: window.Telegram?.WebApp?.themeParams.bg_color || '#e2e8f0' }}></div>
         </div>
