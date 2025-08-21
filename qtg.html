@@ -20,7 +20,7 @@
             'shake': 'shake 0.5s ease-in-out',
             'slide-in': 'slideIn 0.4s ease-out',
             'clear-pulse': 'clearPulse 0.3s ease-in-out',
-            'fade-out': 'fadeOut 0.3s ease-out forwards'
+            'fade-out': 'fadeOut 0.4s ease-out forwards'
           },
           keyframes: {
             pulse: {
@@ -130,6 +130,7 @@
 
     button:active:not(:disabled) {
       transform: scale(0.95);
+      background-color: var(--button-hover);
     }
 
     #suggestions {
@@ -223,6 +224,10 @@
       transition: background-color 0.2s ease, transform 0.2s ease;
     }
 
+    .quiz-option:not(:active) {
+      transform: scale(1);
+    }
+
     .quiz-option:hover:not(:disabled) {
       background-color: var(--quiz-button-hover);
       transform: scale(1.03);
@@ -231,6 +236,11 @@
     .quiz-option:active:not(:disabled) {
       background-color: var(--quiz-button-active);
       transform: scale(0.95);
+      transition: transform 0.1s ease;
+    }
+
+    .quiz-option:focus {
+      outline: none;
     }
 
     .quiz-option.correct {
@@ -243,10 +253,6 @@
       color: var(--button-text);
     }
 
-    .next-button {
-      animation: pulse 0.5s ease-out;
-    }
-
     #quizScore, #flagQuizScore {
       background-color: var(--suggestions-bg);
       border: 1px solid var(--suggestions-border);
@@ -254,10 +260,6 @@
       padding: 0.75rem;
       text-align: center;
       font-weight: 500;
-    }
-
-    #quizOptions.fade-out, #flagQuizOptions.fade-out {
-      animation: fade-out 0.3s ease-out forwards;
     }
 
     #errorBoundary {
@@ -531,17 +533,13 @@
     function QuizTab({ lang, correctAnswers, incorrectAnswers, setCorrectAnswers, setIncorrectAnswers }) {
       const [quizQuestion, setQuizQuestion] = React.useState(null);
       const [quizOptions, setQuizOptions] = React.useState([]);
-      const [showNext, setShowNext] = React.useState(false);
-      const [isTransitioning, setIsTransitioning] = React.useState(false);
       const tg = window.Telegram?.WebApp;
 
       const startQuiz = () => {
         try {
-          console.log('Starting quiz, showNext:', false, 'isTransitioning:', true);
-          setIsTransitioning(true);
+          console.log('Starting quiz, resetting options');
           setQuizQuestion(null);
           setQuizOptions([]);
-          setShowNext(false);
           const countryKeys = Object.keys(countries);
           if (countryKeys.length < 2) {
             setQuizQuestion({ error: true, message: lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries' });
@@ -552,7 +550,6 @@
               console.warn('showAlert not available, using standard alert');
               alert(lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries');
             }
-            setIsTransitioning(false);
             return;
           }
 
@@ -569,12 +566,23 @@
             .sort(() => Math.random() - 0.5)
             .slice(0, 1);
           const options = [correctCapital, ...wrongCapitals].sort(() => Math.random() - 0.5);
-          setQuizOptions(options.map(option => ({ text: option, correct: option === correctCapital })));
-          setTimeout(() => setIsTransitioning(false), 400); // Match fade-out duration
+          setQuizOptions(options.map(option => ({
+            text: option,
+            correct: option === correctCapital,
+            className: 'quiz-option',
+            disabled: false
+          })));
+          // Ensure no button is focused or has residual styles on render
+          setTimeout(() => {
+            document.querySelectorAll('#quizOptions button').forEach(button => {
+              button.blur();
+              button.removeAttribute('style');
+            });
+            console.log('Cleared focus and styles for quiz buttons');
+          }, 50);
         } catch (error) {
           console.error('Error in startQuiz:', error);
           setQuizQuestion({ error: true, message: 'Error starting quiz' });
-          setIsTransitioning(false);
           if (tg && typeof tg.showAlert === 'function') {
             tg.showAlert('Error starting quiz');
           } else {
@@ -585,43 +593,70 @@
 
       const checkAnswer = (selected) => {
         try {
-          console.log('Checking quiz answer, selected:', selected, 'showNext before:', showNext);
-          setQuizOptions(prev =>
-            prev.map(option => ({
-              ...option,
-              disabled: true,
-              className: option.text === selected ? (option.correct ? 'correct' : 'incorrect') : (option.correct ? 'correct' : '')
-            }))
-          );
-          if (selected === quizOptions.find(opt => opt.correct).text) {
-            setCorrectAnswers(prev => {
-              const newCount = prev + 1;
-              localStorage.setItem('correctAnswers', newCount);
-              return newCount;
-            });
-            if (tg && typeof tg.showAlert === 'function') {
-              console.log('Calling showAlert for correct answer');
-              tg.showAlert(lang === 'ru' ? 'Правильно!' : 'Correct!');
-            } else {
-              console.warn('showAlert not available, using standard alert');
-              alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
-            }
-          } else {
-            setIncorrectAnswers(prev => {
-              const newCount = prev + 1;
-              localStorage.setItem('incorrectAnswers', newCount);
-              return newCount;
-            });
-            if (tg && typeof tg.showAlert === 'function') {
-              console.log('Calling showAlert for incorrect answer');
-              tg.showAlert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
-            } else {
-              console.warn('showAlert not available, using standard alert');
-              alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
-            }
-          }
-          setShowNext(true);
-          console.log('showNext after:', true);
+          console.log('Checking quiz answer, selected:', selected);
+          console.log('Applying active state');
+          // Delay to allow active state (scale: 0.95) to complete
+          setTimeout(() => {
+            console.log('Reverting to normal state');
+            setQuizOptions(prev =>
+              prev.map(option => ({
+                ...option,
+                className: 'quiz-option' // Revert to normal state
+              }))
+            );
+            // Apply correct/incorrect and fade-out after normal state
+            setTimeout(() => {
+              console.log('Applying result state and fade-out');
+              setQuizOptions(prev =>
+                prev.map(option => ({
+                  ...option,
+                  disabled: true,
+                  className: `quiz-option ${option.text === selected ? (option.correct ? 'correct fade-out' : 'incorrect fade-out') : (option.correct ? 'correct fade-out' : 'fade-out')}`
+                }))
+              );
+              // Clear focus and styles from all buttons
+              document.querySelectorAll('#quizOptions button').forEach(button => {
+                button.blur();
+                button.removeAttribute('style');
+              });
+              console.log('Cleared focus and styles after quiz answer');
+              if (selected === quizOptions.find(opt => opt.correct).text) {
+                setCorrectAnswers(prev => {
+                  const newCount = prev + 1;
+                  localStorage.setItem('correctAnswers', newCount);
+                  return newCount;
+                });
+                if (tg && typeof tg.showAlert === 'function') {
+                  console.log('Calling showAlert for correct answer');
+                  tg.showAlert(lang === 'ru' ? 'Правильно!' : 'Correct!', () => {
+                    console.log('Triggering next question after alert');
+                    setTimeout(startQuiz, 400); // Wait for fade-out animation
+                  });
+                } else {
+                  console.warn('showAlert not available, using standard alert');
+                  alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+                  setTimeout(startQuiz, 900); // 400ms fade-out + 500ms for alert
+                }
+              } else {
+                setIncorrectAnswers(prev => {
+                  const newCount = prev + 1;
+                  localStorage.setItem('incorrectAnswers', newCount);
+                  return newCount;
+                });
+                if (tg && typeof tg.showAlert === 'function') {
+                  console.log('Calling showAlert for incorrect answer');
+                  tg.showAlert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!', () => {
+                    console.log('Triggering next question after alert');
+                    setTimeout(startQuiz, 400); // Wait for fade-out animation
+                  });
+                } else {
+                  console.warn('showAlert not available, using standard alert');
+                  alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+                  setTimeout(startQuiz, 900); // 400ms fade-out + 500ms for alert
+                }
+              }
+            }, 100); // Brief hold after reverting to normal state
+          }, 200); // Allow active state to complete
         } catch (error) {
           console.error('Error in checkAnswer:', error);
           if (tg && typeof tg.showAlert === 'function') {
@@ -661,15 +696,16 @@
           ),
           React.createElement(
             'div',
-            { id: 'quizOptions', className: `grid gap-2 ${showNext ? 'fade-out' : ''}` },
+            { id: 'quizOptions', className: 'grid gap-2' },
             quizOptions.map(option =>
               React.createElement(
                 'button',
                 {
                   key: option.text,
-                  className: `quiz-option ${option.className || ''}`,
+                  className: option.className || 'quiz-option',
                   onClick: () => checkAnswer(option.text),
-                  disabled: option.disabled || isTransitioning
+                  disabled: option.disabled,
+                  tabIndex: -1
                 },
                 option.text
               )
@@ -678,19 +714,6 @@
           React.createElement(
             'div',
             { className: 'flex gap-2 mt-2' },
-            showNext && React.createElement(
-              'button',
-              {
-                id: 'nextQuestion',
-                className: 'w-full p-2 rounded-lg bg-[var(--button-bg)] text-[var(--button-text)] next-button',
-                onClick: () => {
-                  console.log('Clicked Next button in quiz, showNext:', showNext, 'isTransitioning:', isTransitioning);
-                  startQuiz();
-                },
-                disabled: isTransitioning
-              },
-              lang === 'ru' ? 'Следующий' : 'Next'
-            ),
             React.createElement(
               'button',
               {
@@ -715,17 +738,13 @@
     function FlagQuizTab({ lang, flagCorrectAnswers, flagIncorrectAnswers, setFlagCorrectAnswers, setFlagIncorrectAnswers }) {
       const [flagQuizQuestion, setFlagQuizQuestion] = React.useState(null);
       const [flagQuizOptions, setFlagQuizOptions] = React.useState([]);
-      const [showNext, setShowNext] = React.useState(false);
-      const [isTransitioning, setIsTransitioning] = React.useState(false);
       const tg = window.Telegram?.WebApp;
 
       const startFlagQuiz = () => {
         try {
-          console.log('Starting flag quiz, showNext:', false, 'isTransitioning:', true);
-          setIsTransitioning(true);
+          console.log('Starting flag quiz, resetting options');
           setFlagQuizQuestion(null);
           setFlagQuizOptions([]);
-          setShowNext(false);
           const countryKeys = Object.keys(countries);
           if (countryKeys.length < 2) {
             setFlagQuizQuestion({ error: true, message: lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries' });
@@ -736,7 +755,6 @@
               console.warn('showAlert not available, using standard alert');
               alert(lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries');
             }
-            setIsTransitioning(false);
             return;
           }
 
@@ -753,12 +771,23 @@
             .sort(() => Math.random() - 0.5)
             .slice(0, 1);
           const options = [correctCountry, ...wrongCountries].sort(() => Math.random() - 0.5);
-          setFlagQuizOptions(options.map(option => ({ text: option, correct: option === correctCountry })));
-          setTimeout(() => setIsTransitioning(false), 400); // Match fade-out duration
+          setFlagQuizOptions(options.map(option => ({
+            text: option,
+            correct: option === correctCountry,
+            className: 'quiz-option',
+            disabled: false
+          })));
+          // Ensure no button is focused or has residual styles on render
+          setTimeout(() => {
+            document.querySelectorAll('#flagQuizOptions button').forEach(button => {
+              button.blur();
+              button.removeAttribute('style');
+            });
+            console.log('Cleared focus and styles for flag quiz buttons');
+          }, 50);
         } catch (error) {
           console.error('Error in startFlagQuiz:', error);
           setFlagQuizQuestion({ error: true, message: 'Error starting flag quiz' });
-          setIsTransitioning(false);
           if (tg && typeof tg.showAlert === 'function') {
             tg.showAlert('Error starting flag quiz');
           } else {
@@ -769,43 +798,70 @@
 
       const checkAnswer = (selected) => {
         try {
-          console.log('Checking flag quiz answer, selected:', selected, 'showNext before:', showNext);
-          setFlagQuizOptions(prev =>
-            prev.map(option => ({
-              ...option,
-              disabled: true,
-              className: option.text === selected ? (option.correct ? 'correct' : 'incorrect') : (option.correct ? 'correct' : '')
-            }))
-          );
-          if (selected === flagQuizOptions.find(opt => opt.correct).text) {
-            setFlagCorrectAnswers(prev => {
-              const newCount = prev + 1;
-              localStorage.setItem('flagCorrectAnswers', newCount);
-              return newCount;
-            });
-            if (tg && typeof tg.showAlert === 'function') {
-              console.log('Calling showAlert for correct answer');
-              tg.showAlert(lang === 'ru' ? 'Правильно!' : 'Correct!');
-            } else {
-              console.warn('showAlert not available, using standard alert');
-              alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
-            }
-          } else {
-            setFlagIncorrectAnswers(prev => {
-              const newCount = prev + 1;
-              localStorage.setItem('flagIncorrectAnswers', newCount);
-              return newCount;
-            });
-            if (tg && typeof tg.showAlert === 'function') {
-              console.log('Calling showAlert for incorrect answer');
-              tg.showAlert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
-            } else {
-              console.warn('showAlert not available, using standard alert');
-              alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
-            }
-          }
-          setShowNext(true);
-          console.log('showNext after:', true);
+          console.log('Checking flag quiz answer, selected:', selected);
+          console.log('Applying active state');
+          // Delay to allow active state (scale: 0.95) to complete
+          setTimeout(() => {
+            console.log('Reverting to normal state');
+            setFlagQuizOptions(prev =>
+              prev.map(option => ({
+                ...option,
+                className: 'quiz-option' // Revert to normal state
+              }))
+            );
+            // Apply correct/incorrect and fade-out after normal state
+            setTimeout(() => {
+              console.log('Applying result state and fade-out');
+              setFlagQuizOptions(prev =>
+                prev.map(option => ({
+                  ...option,
+                  disabled: true,
+                  className: `quiz-option ${option.text === selected ? (option.correct ? 'correct fade-out' : 'incorrect fade-out') : (option.correct ? 'correct fade-out' : 'fade-out')}`
+                }))
+              );
+              // Clear focus and styles from all buttons
+              document.querySelectorAll('#flagQuizOptions button').forEach(button => {
+                button.blur();
+                button.removeAttribute('style');
+              });
+              console.log('Cleared focus and styles after flag quiz answer');
+              if (selected === flagQuizOptions.find(opt => opt.correct).text) {
+                setFlagCorrectAnswers(prev => {
+                  const newCount = prev + 1;
+                  localStorage.setItem('flagCorrectAnswers', newCount);
+                  return newCount;
+                });
+                if (tg && typeof tg.showAlert === 'function') {
+                  console.log('Calling showAlert for correct answer');
+                  tg.showAlert(lang === 'ru' ? 'Правильно!' : 'Correct!', () => {
+                    console.log('Triggering next question after alert');
+                    setTimeout(startFlagQuiz, 400); // Wait for fade-out animation
+                  });
+                } else {
+                  console.warn('showAlert not available, using standard alert');
+                  alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+                  setTimeout(startFlagQuiz, 900); // 400ms fade-out + 500ms for alert
+                }
+              } else {
+                setFlagIncorrectAnswers(prev => {
+                  const newCount = prev + 1;
+                  localStorage.setItem('flagIncorrectAnswers', newCount);
+                  return newCount;
+                });
+                if (tg && typeof tg.showAlert === 'function') {
+                  console.log('Calling showAlert for incorrect answer');
+                  tg.showAlert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!', () => {
+                    console.log('Triggering next question after alert');
+                    setTimeout(startFlagQuiz, 400); // Wait for fade-out animation
+                  });
+                } else {
+                  console.warn('showAlert not available, using standard alert');
+                  alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+                  setTimeout(startFlagQuiz, 900); // 400ms fade-out + 500ms for alert
+                }
+              }
+            }, 100); // Brief hold after reverting to normal state
+          }, 200); // Allow active state to complete
         } catch (error) {
           console.error('Error in checkAnswer:', error);
           if (tg && typeof tg.showAlert === 'function') {
@@ -845,15 +901,16 @@
           ),
           React.createElement(
             'div',
-            { id: 'flagQuizOptions', className: `grid gap-2 ${showNext ? 'fade-out' : ''}` },
+            { id: 'flagQuizOptions', className: 'grid gap-2' },
             flagQuizOptions.map(option =>
               React.createElement(
                 'button',
                 {
                   key: option.text,
-                  className: `quiz-option ${option.className || ''}`,
+                  className: option.className || 'quiz-option',
                   onClick: () => checkAnswer(option.text),
-                  disabled: option.disabled || isTransitioning
+                  disabled: option.disabled,
+                  tabIndex: -1
                 },
                 option.text
               )
@@ -862,19 +919,6 @@
           React.createElement(
             'div',
             { className: 'flex gap-2 mt-2' },
-            showNext && React.createElement(
-              'button',
-              {
-                id: 'nextFlagQuestion',
-                className: 'w-full p-2 rounded-lg bg-[var(--button-bg)] text-[var(--button-text)] next-button',
-                onClick: () => {
-                  console.log('Clicked Next button in flag quiz, showNext:', showNext, 'isTransitioning:', isTransitioning);
-                  startFlagQuiz();
-                },
-                disabled: isTransitioning
-              },
-              lang === 'ru' ? 'Следующий' : 'Next'
-            ),
             React.createElement(
               'button',
               {
