@@ -4,13 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Найдите столицу любой страны, проверьте свои знания в викторине по столицам или угадайте страну по флагу.">
-  <meta name="keywords" content="столицы, страны, поиск столиц, викторина, флаги, география">
-  <title id="pageTitle">Столицы стран</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@telegram-apps/telegram-ui@2.1.2/dist/styles.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Столицы стран</title>
+  <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" onerror="console.error('Failed to load React script'); alert('Error: Failed to load React. Check your connection.');"></script>
+  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" onerror="console.error('Failed to load ReactDOM script'); alert('Error: Failed to load ReactDOM. Check your connection.');"></script>
+  <script src="https://cdn.tailwindcss.com" onerror="console.error('Failed to load Tailwind CSS script'); alert('Error: Failed to load Tailwind CSS. Check your connection.');"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -19,14 +16,9 @@
             'pulse': 'pulse 1s ease-out',
             'slide-up': 'slideUp 0.5s ease-out',
             'wave-in': 'waveIn 0.4s ease-out forwards',
-            'flip-in': 'flipIn 0.6s ease-out',
-            'gradient-shift': 'gradientShift 1s ease-in-out',
             'shake': 'shake 0.5s ease-in-out',
-            'rotate-flag': 'rotateFlag 0.4s ease-in-out',
             'slide-in': 'slideIn 0.4s ease-out',
             'clear-pulse': 'clearPulse 0.3s ease-in-out',
-            'spin': 'spin 1s linear infinite',
-            'bounce': 'bounce 0.4s ease-out',
             'fade-out': 'fadeOut 0.3s ease-out forwards'
           },
           keyframes: {
@@ -43,26 +35,12 @@
               '0%': { opacity: '0', transform: 'translateX(-10px) rotateY(30deg)' },
               '100%': { opacity: '1', transform: 'translateX(0) rotateY(0)' }
             },
-            flipIn: {
-              '0%': { opacity: '0', transform: 'perspective(400px) rotateX(90deg)' },
-              '100%': { opacity: '1', transform: 'perspective(400px) rotateX(0)' }
-            },
-            gradientShift: {
-              '0%': { backgroundPosition: '0% 50%' },
-              '50%': { backgroundPosition: '100% 50%' },
-              '100%': { backgroundPosition: '0% 50%' }
-            },
             shake: {
               '0%, 100%': { transform: 'translateX(0)' },
               '20%': { transform: 'translateX(-10px) rotate(-2deg)' },
               '40%': { transform: 'translateX(10px) rotate(2deg)' },
               '60%': { transform: 'translateX(-5px) rotate(-1deg)' },
               '80%': { transform: 'translateX(5px) rotate(1deg)' }
-            },
-            rotateFlag: {
-              '0%': { transform: 'rotateY(0deg) scale(1)' },
-              '50%': { transform: 'rotateY(90deg) scale(0.8)' },
-              '100%': { transform: 'rotateY(0deg) scale(1)' }
             },
             slideIn: {
               '0%': { opacity: '0', transform: 'translateY(10px)' },
@@ -72,15 +50,6 @@
               '0%': { transform: 'translateY(-50%) scale(1)', opacity: '0.7' },
               '50%': { transform: 'translateY(-50%) scale(1.2)', opacity: '1' },
               '100%': { transform: 'translateY(-50%) scale(1)', opacity: '0.7' }
-            },
-            spin: {
-              '0%': { transform: 'rotate(0deg)' },
-              '100%': { transform: 'rotate(360deg)' }
-            },
-            bounce: {
-              '0%': { transform: 'scale(1)' },
-              '50%': { transform: 'scale(1.2)' },
-              '100%': { transform: 'scale(1)' }
             },
             fadeOut: {
               '0%': { opacity: '1', transform: 'scale(1)' },
@@ -117,8 +86,7 @@
 
     body {
       font-family: 'Inter', sans-serif;
-      background-image: linear-gradient(135deg, var(--bg-color) 0%, var(--bg-color) 100%);
-      background-size: 200% 200%;
+      background-color: var(--bg-color);
       color: var(--text-color);
       margin: 0;
       padding: 0;
@@ -126,13 +94,11 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      animation: gradient-shift 1s ease-in-out;
     }
 
     input::placeholder {
       color: var(--text-color);
       opacity: 0.6;
-      transition: opacity 0.2s ease;
     }
 
     #suggestions li {
@@ -152,21 +118,16 @@
       color: var(--text-color);
     }
 
-    #countryInput:focus {
-      animation: glow 0.5s ease-in-out;
-    }
-
-    #findButton {
+    button {
       background-color: var(--button-bg);
       color: var(--button-text);
     }
 
-    #findButton:hover {
+    button:hover:not(:disabled) {
       background-color: var(--button-hover);
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     }
 
-    #findButton:active {
+    button:active:not(:disabled) {
       transform: scale(0.95);
     }
 
@@ -188,23 +149,10 @@
     #langToggle:hover {
       background-color: var(--button-hover);
       color: var(--button-text);
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     }
 
     #langToggle:active {
       transform: scale(0.95);
-    }
-
-    #langIcon {
-      display: inline-block;
-    }
-
-    #langToggle:hover #langIcon {
-      transform: scale(1.2);
-    }
-
-    #langToggle.active #langIcon {
-      animation: rotate-flag 0.4s ease-in-out;
     }
 
     #countryInfo {
@@ -216,7 +164,6 @@
       width: 24px;
       height: 24px;
       object-fit: contain;
-      image-rendering: crisp-edges;
     }
 
     #clearInput {
@@ -232,7 +179,6 @@
       border-radius: 50%;
       cursor: pointer;
       opacity: 0.7;
-      transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -243,26 +189,8 @@
       background-color: var(--suggestions-hover);
     }
 
-    #clearInput.active {
-      animation: clear-pulse 0.3s ease-in-out;
-    }
-
     #clearInput.hidden {
       display: none;
-    }
-
-    .flag-spinner {
-      display: none;
-      width: 24px;
-      height: 24px;
-      border: 2px solid var(--text-color);
-      border-top: 2px solid transparent;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    .flag-spinner.active {
-      display: inline-block;
     }
 
     .tab {
@@ -282,7 +210,6 @@
     .tab.active {
       background-color: var(--button-bg);
       color: var(--button-text);
-      animation: pulse 0.3s ease-out;
     }
 
     .quiz-option {
@@ -295,12 +222,12 @@
       transition: background-color 0.2s ease, transform 0.2s ease;
     }
 
-    .quiz-option:hover {
+    .quiz-option:hover:not(:disabled) {
       background-color: var(--quiz-button-hover);
       transform: scale(1.03);
     }
 
-    .quiz-option:active {
+    .quiz-option:active:not(:disabled) {
       background-color: var(--quiz-button-active);
       transform: scale(0.95);
     }
@@ -315,21 +242,8 @@
       color: var(--button-text);
     }
 
-    #nextQuestion, #resetQuiz, #nextFlagQuestion, #resetFlagQuiz {
-      background-color: var(--button-bg);
-      color: var(--button-text);
-      padding: 0.75rem;
-      border-radius: 8px;
-      transition: background-color 0.2s ease, transform 0.2s ease;
-    }
-
-    #nextQuestion:hover, #resetQuiz:hover, #nextFlagQuestion:hover, #resetFlagQuiz:hover {
-      background-color: var(--button-hover);
-      transform: scale(1.03);
-    }
-
-    #nextQuestion:active, #resetQuiz:active, #nextFlagQuestion:active, #resetFlagQuiz:active {
-      transform: scale(0.95);
+    .next-button {
+      animation: pulse 0.5s ease-out;
     }
 
     #quizScore, #flagQuizScore {
@@ -339,11 +253,19 @@
       padding: 0.75rem;
       text-align: center;
       font-weight: 500;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
 
     #quizOptions.fade-out, #flagQuizOptions.fade-out {
       animation: fade-out 0.3s ease-out forwards;
+    }
+
+    #errorBoundary {
+      background-color: var(--suggestions-bg);
+      border: 1px solid var(--error-text);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      color: var(--error-text);
     }
 
     @media (max-width: 600px) {
@@ -351,19 +273,23 @@
         padding: 0.5rem;
       }
     }
-
-    @keyframes glow {
-      0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-      50% { box-shadow: 0 0 15px 2px rgba(59, 130, 246, 0.5); }
-      100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-    }
   </style>
 </head>
 <body>
-  <div id="root" class="container w-full max-w-sm p-6"></div>
+  <div id="root" class="container w-full max-w-sm p-4"></div>
 
   <script>
-    const { AppRoot, Button, Input } = window.TelegramUI;
+    // Check React and ReactDOM dependencies
+    try {
+      if (!window.React || !window.ReactDOM) {
+        console.error('Error: React or ReactDOM not loaded.');
+        alert('Error loading React. Check your internet connection.');
+        throw new Error('React not loaded');
+      }
+    } catch (error) {
+      console.error('Error checking React dependencies:', error);
+      alert('Error loading React dependencies. Check console.');
+    }
 
     const countries = {
       "Россия": {
@@ -395,61 +321,105 @@
       }
     };
 
-    function SearchTab({ lang, setResult, setCountryInfo, countryInput, setCountryInput, suggestions, setSuggestions }) {
-      const tg = window.Telegram.WebApp;
+    class ErrorBoundary extends React.Component {
+      state = { hasError: false, error: null };
 
-      const handleInput = (e) => {
-        const input = e.target.value;
-        setCountryInput(input);
-        if (input.length < 2) {
-          setSuggestions([]);
-          return;
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+
+      componentDidCatch(error, errorInfo) {
+        console.error('ErrorBoundary caught error:', error, errorInfo);
+      }
+
+      render() {
+        if (this.state.hasError) {
+          return React.createElement(
+            'div',
+            { id: 'errorBoundary' },
+            'Something went wrong. Please check the console and try again.'
+          );
         }
-        const matches = Object.keys(countries)
-          .filter(country =>
-            (lang === 'ru' ? country : countries[country].en)
-              .toLowerCase()
-              .includes(input.toLowerCase())
-          )
-          .slice(0, 5);
-        setSuggestions(matches);
+        return this.props.children;
+      }
+    }
+
+    function SearchTab({ lang, result, setResult, countryInfo, setCountryInfo, countryInput, setCountryInput, suggestions, setSuggestions }) {
+      const handleInput = (e) => {
+        try {
+          const input = e.target.value;
+          setCountryInput(input);
+          if (input.length < 2) {
+            setSuggestions([]);
+            return;
+          }
+          const matches = Object.keys(countries)
+            .filter(country =>
+              (lang === 'ru' ? country : countries[country].en)
+                .toLowerCase()
+                .includes(input.toLowerCase())
+            )
+            .slice(0, 5);
+          setSuggestions(matches);
+        } catch (error) {
+          console.error('Error in handleInput:', error);
+        }
       };
 
       const handleSuggestionClick = (country) => {
-        setCountryInput(lang === 'ru' ? country : countries[country].en);
-        setSuggestions([]);
-        findCapital(country);
+        try {
+          setCountryInput(lang === 'ru' ? country : countries[country].en);
+          setSuggestions([]);
+          findCapital(country);
+        } catch (error) {
+          console.error('Error in handleSuggestionClick:', error);
+        }
       };
 
       const findCapital = (input) => {
-        setResult(null);
-        setCountryInfo(null);
-        const countryKey = Object.keys(countries).find(
-          key =>
-            key.toLowerCase() === input.toLowerCase() ||
-            countries[key].en.toLowerCase() === input.toLowerCase()
-        );
+        try {
+          console.log('Searching capital for:', input);
+          setResult(null);
+          setCountryInfo(null);
+          const countryKey = Object.keys(countries).find(
+            key =>
+              key.toLowerCase() === input.toLowerCase() ||
+              countries[key].en.toLowerCase() === input.toLowerCase()
+          );
 
-        if (countryKey) {
-          const country = countries[countryKey];
-          const flag = `https://flagcdn.com/96x72/${country.code}.png`;
-          const capital = lang === 'ru' ? country.capital : country.enCapital;
-          setResult({ flag, capital, error: false });
-          setCountryInfo({
-            region: country.region,
-            population: country.population,
-            language: country.language
-          });
-        } else {
-          setResult({ error: true, message: lang === 'ru' ? 'Страна не найдена' : 'Country not found' });
+          if (countryKey) {
+            const country = countries[countryKey];
+            const flag = `https://flagcdn.com/96x72/${country.code}.png`;
+            const capital = lang === 'ru' ? country.capital : country.enCapital;
+            setResult({ flag, capital, error: false });
+            setCountryInfo({
+              region: country.region,
+              population: country.population,
+              language: country.language
+            });
+            console.log('Capital found:', capital);
+            alert(`${lang === 'ru' ? 'Столица найдена' : 'Capital found'}: ${capital}`);
+          } else {
+            setResult({ error: true, message: lang === 'ru' ? 'Страна не найдена' : 'Country not found' });
+            console.log('Country not found:', input);
+            alert(lang === 'ru' ? 'Страна не найдена' : 'Country not found');
+          }
+        } catch (error) {
+          console.error('Error in findCapital:', error);
+          setResult({ error: true, message: 'Error processing request' });
+          alert('Error processing request');
         }
       };
 
       const clearInput = () => {
-        setCountryInput('');
-        setResult(null);
-        setCountryInfo(null);
-        setSuggestions([]);
+        try {
+          setCountryInput('');
+          setResult(null);
+          setCountryInfo(null);
+          setSuggestions([]);
+        } catch (error) {
+          console.error('Error in clearInput:', error);
+        }
       };
 
       return (
@@ -460,31 +430,28 @@
             'div',
             { className: 'relative' },
             React.createElement(
-              Input,
+              'input',
               {
                 id: 'countryInput',
                 placeholder: lang === 'ru' ? 'Введите страну' : 'Enter country',
                 value: countryInput,
                 onChange: handleInput,
-                className: 'w-full p-3 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition transform duration-200 animate-slide-up'
+                onKeyPress: (e) => e.key === 'Enter' && findCapital(countryInput),
+                className: 'w-full p-2 rounded-lg border bg-[var(--input-bg)] border-[var(--input-border)] text-[var(--text-color)]'
               }
             ),
             React.createElement(
-              Button,
+              'button',
               {
                 id: 'clearInput',
                 className: `absolute right-2 top-1/2 transform -translate-y-1/2 ${countryInput ? '' : 'hidden'}`,
                 onClick: clearInput
               },
-              React.createElement(
-                'svg',
-                { xmlns: 'http://www.w3.org/2000/svg', width: '16', height: '16', fill: 'currentColor', viewBox: '0 0 16 16' },
-                React.createElement('path', { d: 'M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z' })
-              )
+              '×'
             ),
             React.createElement(
               'ul',
-              { id: 'suggestions', className: `absolute w-full rounded-lg mt-2 max-h-48 overflow-y-auto shadow-lg ${suggestions.length ? '' : 'hidden'} z-10` },
+              { id: 'suggestions', className: `absolute w-full rounded-lg mt-1 max-h-40 overflow-y-auto border bg-[var(--suggestions-bg)] border-[var(--suggestions-border)] ${suggestions.length ? '' : 'hidden'}` },
               suggestions.map((country, index) =>
                 React.createElement(
                   'li',
@@ -500,30 +467,31 @@
             )
           ),
           React.createElement(
-            Button,
+            'button',
             {
               id: 'findButton',
-              className: 'mt-4 w-full p-3 rounded-lg hover:shadow-lg transition transform duration-200 font-medium animate-slide-up',
+              className: 'mt-2 w-full p-2 rounded-lg bg-[var(--button-bg)] text-[var(--button-text)]',
               onClick: () => findCapital(countryInput)
             },
             lang === 'ru' ? 'Найти столицу' : 'Find Capital'
           ),
-          result && (
-            React.createElement(
-              'div',
-              { id: 'result', className: `mt-6 text-center text-lg flex items-center justify-center gap-2 ${result.error ? 'error animate-shake' : 'animate-flip-in'}` },
-              !result.error && React.createElement('img', { src: result.flag, alt: 'Flag', className: 'w-6 h-6', loading: 'lazy' }),
-              React.createElement('span', null, result.error ? result.message : `${lang === 'ru' ? 'Столица' : 'Capital'}: ${result.capital}`)
-            )
+          result && React.createElement(
+            'div',
+            { id: 'result', className: `mt-4 text-center flex items-center justify-center gap-2 ${result.error ? 'error' : 'animate-slide-in'}` },
+            !result.error && React.createElement('img', {
+              src: result.flag,
+              alt: 'Flag',
+              className: 'w-6 h-6',
+              onError: () => console.error('Error loading flag:', result.flag)
+            }),
+            React.createElement('span', null, result.error ? result.message : `${lang === 'ru' ? 'Столица' : 'Capital'}: ${result.capital}`)
           ),
-          countryInfo && (
-            React.createElement(
-              'div',
-              { id: 'countryInfo', className: 'mt-4 p-4 rounded-lg shadow-sm animate-slide-in' },
-              React.createElement('p', null, React.createElement('strong', null, lang === 'ru' ? 'Регион' : 'Region'), ': ', countryInfo.region),
-              React.createElement('p', null, React.createElement('strong', null, lang === 'ru' ? 'Население столицы' : 'Capital Population'), ': ', countryInfo.population),
-              React.createElement('p', null, React.createElement('strong', null, lang === 'ru' ? 'Язык' : 'Language'), ': ', countryInfo.language)
-            )
+          countryInfo && React.createElement(
+            'div',
+            { id: 'countryInfo', className: 'mt-2 p-2 rounded-lg border bg-[var(--suggestions-bg)] border-[var(--suggestions-border)] animate-slide-in' },
+            React.createElement('p', null, `${lang === 'ru' ? 'Регион' : 'Region'}: ${countryInfo.region}`),
+            React.createElement('p', null, `${lang === 'ru' ? 'Население' : 'Population'}: ${countryInfo.population}`),
+            React.createElement('p', null, `${lang === 'ru' ? 'Язык' : 'Language'}: ${countryInfo.language}`)
           )
         )
       );
@@ -533,55 +501,80 @@
       const [quizQuestion, setQuizQuestion] = React.useState(null);
       const [quizOptions, setQuizOptions] = React.useState([]);
       const [showNext, setShowNext] = React.useState(false);
+      const [isTransitioning, setIsTransitioning] = React.useState(false);
 
       const startQuiz = () => {
-        setQuizQuestion(null);
-        setQuizOptions([]);
-        setShowNext(false);
-        const countryKeys = Object.keys(countries);
-        if (countryKeys.length < 2) {
-          setQuizQuestion({ error: true, message: lang === 'ru' ? 'Недостаточно стран для викторины' : 'Not enough countries for quiz' });
-          return;
+        try {
+          console.log('Starting quiz, showNext:', false, 'isTransitioning:', true);
+          setIsTransitioning(true);
+          setQuizQuestion(null);
+          setQuizOptions([]);
+          setShowNext(false);
+          const countryKeys = Object.keys(countries);
+          if (countryKeys.length < 2) {
+            setQuizQuestion({ error: true, message: lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries' });
+            console.log('Not enough countries for quiz');
+            alert(lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries');
+            setIsTransitioning(false);
+            return;
+          }
+
+          const randomCountry = countryKeys[Math.floor(Math.random() * countryKeys.length)];
+          const country = countries[randomCountry];
+          const flag = `https://flagcdn.com/96x72/${country.code}.png`;
+          const correctCapital = lang === 'ru' ? country.capital : country.enCapital;
+
+          setQuizQuestion({ flag, country: lang === 'ru' ? randomCountry : country.en });
+
+          const allCapitals = countryKeys.map(key => lang === 'ru' ? countries[key].capital : countries[key].enCapital);
+          const wrongCapitals = allCapitals
+            .filter(capital => capital !== correctCapital)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 1);
+          const options = [correctCapital, ...wrongCapitals].sort(() => Math.random() - 0.5);
+          setQuizOptions(options.map(option => ({ text: option, correct: option === correctCapital })));
+          setTimeout(() => setIsTransitioning(false), 400); // Match fade-out duration
+        } catch (error) {
+          console.error('Error in startQuiz:', error);
+          setQuizQuestion({ error: true, message: 'Error starting quiz' });
+          setIsTransitioning(false);
+          alert('Error starting quiz');
         }
-
-        const randomCountry = countryKeys[Math.floor(Math.random() * countryKeys.length)];
-        const country = countries[randomCountry];
-        const flag = `https://flagcdn.com/96x72/${country.code}.png`;
-        const correctCapital = lang === 'ru' ? country.capital : country.enCapital;
-
-        setQuizQuestion({ flag, country: lang === 'ru' ? randomCountry : country.en });
-
-        const allCapitals = countryKeys.map(key => lang === 'ru' ? countries[key].capital : countries[key].enCapital);
-        const wrongCapitals = allCapitals
-          .filter(capital => capital !== correctCapital)
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 1);
-        const options = [correctCapital, ...wrongCapitals].sort(() => Math.random() - 0.5);
-        setQuizOptions(options.map(option => ({ text: option, correct: option === correctCapital })));
       };
 
       const checkAnswer = (selected) => {
-        setQuizOptions(prev =>
-          prev.map(option => ({
-            ...option,
-            disabled: true,
-            className: option.text === selected ? (option.correct ? 'correct' : 'incorrect') : (option.correct ? 'correct' : '')
-          }))
-        );
-        if (selected === quizOptions.find(opt => opt.correct).text) {
-          setCorrectAnswers(prev => {
-            const newCount = prev + 1;
-            localStorage.setItem('correctAnswers', newCount);
-            return newCount;
-          });
-        } else {
-          setIncorrectAnswers(prev => {
-            const newCount = prev + 1;
-            localStorage.setItem('incorrectAnswers', newCount);
-            return newCount;
-          });
+        try {
+          console.log('Checking quiz answer, selected:', selected, 'showNext before:', showNext);
+          setQuizOptions(prev =>
+            prev.map(option => ({
+              ...option,
+              disabled: true,
+              className: option.text === selected ? (option.correct ? 'correct' : 'incorrect') : (option.correct ? 'correct' : '')
+            }))
+          );
+          if (selected === quizOptions.find(opt => opt.correct).text) {
+            setCorrectAnswers(prev => {
+              const newCount = prev + 1;
+              localStorage.setItem('correctAnswers', newCount);
+              return newCount;
+            });
+            console.log('Correct answer');
+            alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+          } else {
+            setIncorrectAnswers(prev => {
+              const newCount = prev + 1;
+              localStorage.setItem('incorrectAnswers', newCount);
+              return newCount;
+            });
+            console.log('Incorrect answer');
+            alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+          }
+          setShowNext(true);
+          console.log('showNext after:', true);
+        } catch (error) {
+          console.error('Error in checkAnswer:', error);
+          alert('Error processing answer');
         }
-        setShowNext(true);
       };
 
       React.useEffect(() => {
@@ -594,7 +587,7 @@
           { id: 'quizContainer' },
           React.createElement(
             'div',
-            { id: 'quizScore', className: 'text-center text-lg mb-4' },
+            { id: 'quizScore', className: 'text-center mb-2 p-2 rounded-lg border bg-[var(--suggestions-bg)] border-[var(--suggestions-border)]' },
             lang === 'ru'
               ? `Правильных: ${correctAnswers}, Неправильных: ${incorrectAnswers}`
               : `Correct: ${correctAnswers}, Incorrect: ${incorrectAnswers}`
@@ -602,8 +595,12 @@
           quizQuestion && (
             React.createElement(
               'div',
-              { id: 'quizQuestion', className: `text-center text-lg flex items-center justify-center gap-2 mb-4 ${quizQuestion.error ? 'error animate-shake' : 'animate-flip-in'}` },
-              !quizQuestion.error && React.createElement('img', { src: quizQuestion.flag, alt: 'Flag', className: 'w-6 h-6', loading: 'lazy' }),
+              { id: 'quizQuestion', className: `text-center flex items-center justify-center gap-2 mb-2 ${quizQuestion.error ? 'error' : 'animate-slide-in'}` },
+              !quizQuestion.error && React.createElement('img', {
+                src: quizQuestion.flag,
+                alt: 'Flag',
+                className: 'w-6 h-6'
+              }),
               React.createElement('span', null, quizQuestion.error ? quizQuestion.message : `${lang === 'ru' ? 'Назови столицу' : 'Name the capital'}: ${quizQuestion.country}`)
             )
           ),
@@ -612,12 +609,12 @@
             { id: 'quizOptions', className: `grid gap-2 ${showNext ? 'fade-out' : ''}` },
             quizOptions.map(option =>
               React.createElement(
-                Button,
+                'button',
                 {
                   key: option.text,
                   className: `quiz-option ${option.className || ''}`,
                   onClick: () => checkAnswer(option.text),
-                  disabled: option.disabled
+                  disabled: option.disabled || isTransitioning
                 },
                 option.text
               )
@@ -625,18 +622,27 @@
           ),
           React.createElement(
             'div',
-            { className: 'flex gap-2 mt-4' },
-            React.createElement(
-              Button,
-              { id: 'nextQuestion', className: `w-full p-3 rounded-lg hover:shadow-lg transition transform duration-200 font-medium ${showNext ? '' : 'hidden'}`, onClick: startQuiz },
-              lang === 'ru' ? 'Следующий вопрос' : 'Next Question'
+            { className: 'flex gap-2 mt-2' },
+            showNext && React.createElement(
+              'button',
+              {
+                id: 'nextQuestion',
+                className: 'w-full p-2 rounded-lg bg-[var(--button-bg)] text-[var(--button-text)] next-button',
+                onClick: () => {
+                  console.log('Clicked Next button in quiz, showNext:', showNext, 'isTransitioning:', isTransitioning);
+                  startQuiz();
+                },
+                disabled: isTransitioning
+              },
+              lang === 'ru' ? 'Следующий' : 'Next'
             ),
             React.createElement(
-              Button,
+              'button',
               {
                 id: 'resetQuiz',
-                className: 'w-full p-3 rounded-lg hover:shadow-lg transition transform duration-200 font-medium',
+                className: 'w-full p-2 rounded-lg bg-[var(--button-bg)] text-[var(--button-text)]',
                 onClick: () => {
+                  console.log('Clicked Reset button in quiz');
                   setCorrectAnswers(0);
                   setIncorrectAnswers(0);
                   localStorage.setItem('correctAnswers', 0);
@@ -644,7 +650,7 @@
                   startQuiz();
                 }
               },
-              lang === 'ru' ? 'Начать заново' : 'Start Over'
+              lang === 'ru' ? 'Сбросить' : 'Reset'
             )
           )
         )
@@ -655,55 +661,80 @@
       const [flagQuizQuestion, setFlagQuizQuestion] = React.useState(null);
       const [flagQuizOptions, setFlagQuizOptions] = React.useState([]);
       const [showNext, setShowNext] = React.useState(false);
+      const [isTransitioning, setIsTransitioning] = React.useState(false);
 
       const startFlagQuiz = () => {
-        setFlagQuizQuestion(null);
-        setFlagQuizOptions([]);
-        setShowNext(false);
-        const countryKeys = Object.keys(countries);
-        if (countryKeys.length < 2) {
-          setFlagQuizQuestion({ error: true, message: lang === 'ru' ? 'Недостаточно стран для викторины' : 'Not enough countries for quiz' });
-          return;
+        try {
+          console.log('Starting flag quiz, showNext:', false, 'isTransitioning:', true);
+          setIsTransitioning(true);
+          setFlagQuizQuestion(null);
+          setFlagQuizOptions([]);
+          setShowNext(false);
+          const countryKeys = Object.keys(countries);
+          if (countryKeys.length < 2) {
+            setFlagQuizQuestion({ error: true, message: lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries' });
+            console.log('Not enough countries for flag quiz');
+            alert(lang === 'ru' ? 'Недостаточно стран' : 'Not enough countries');
+            setIsTransitioning(false);
+            return;
+          }
+
+          const randomCountry = countryKeys[Math.floor(Math.random() * countryKeys.length)];
+          const country = countries[randomCountry];
+          const flag = `https://flagcdn.com/96x72/${country.code}.png`;
+          const correctCountry = lang === 'ru' ? randomCountry : country.en;
+
+          setFlagQuizQuestion({ flag });
+
+          const allCountries = countryKeys.map(key => lang === 'ru' ? key : countries[key].en);
+          const wrongCountries = allCountries
+            .filter(c => c !== correctCountry)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 1);
+          const options = [correctCountry, ...wrongCountries].sort(() => Math.random() - 0.5);
+          setFlagQuizOptions(options.map(option => ({ text: option, correct: option === correctCountry })));
+          setTimeout(() => setIsTransitioning(false), 400); // Match fade-out duration
+        } catch (error) {
+          console.error('Error in startFlagQuiz:', error);
+          setFlagQuizQuestion({ error: true, message: 'Error starting flag quiz' });
+          setIsTransitioning(false);
+          alert('Error starting flag quiz');
         }
-
-        const randomCountry = countryKeys[Math.floor(Math.random() * countryKeys.length)];
-        const country = countries[randomCountry];
-        const flag = `https://flagcdn.com/96x72/${country.code}.png`;
-        const correctCountry = lang === 'ru' ? randomCountry : country.en;
-
-        setFlagQuizQuestion({ flag });
-
-        const allCountries = countryKeys.map(key => lang === 'ru' ? key : countries[key].en);
-        const wrongCountries = allCountries
-          .filter(c => c !== correctCountry)
-          .sort(() => Math.random() - 0.5)
-          .slice(0, 1);
-        const options = [correctCountry, ...wrongCountries].sort(() => Math.random() - 0.5);
-        setFlagQuizOptions(options.map(option => ({ text: option, correct: option === correctCountry })));
       };
 
       const checkAnswer = (selected) => {
-        setFlagQuizOptions(prev =>
-          prev.map(option => ({
-            ...option,
-            disabled: true,
-            className: option.text === selected ? (option.correct ? 'correct' : 'incorrect') : (option.correct ? 'correct' : '')
-          }))
-        );
-        if (selected === flagQuizOptions.find(opt => opt.correct).text) {
-          setFlagCorrectAnswers(prev => {
-            const newCount = prev + 1;
-            localStorage.setItem('flagCorrectAnswers', newCount);
-            return newCount;
-          });
-        } else {
-          setFlagIncorrectAnswers(prev => {
-            const newCount = prev + 1;
-            localStorage.setItem('flagIncorrectAnswers', newCount);
-            return newCount;
-          });
+        try {
+          console.log('Checking flag quiz answer, selected:', selected, 'showNext before:', showNext);
+          setFlagQuizOptions(prev =>
+            prev.map(option => ({
+              ...option,
+              disabled: true,
+              className: option.text === selected ? (option.correct ? 'correct' : 'incorrect') : (option.correct ? 'correct' : '')
+            }))
+          );
+          if (selected === flagQuizOptions.find(opt => opt.correct).text) {
+            setFlagCorrectAnswers(prev => {
+              const newCount = prev + 1;
+              localStorage.setItem('flagCorrectAnswers', newCount);
+              return newCount;
+            });
+            console.log('Correct answer');
+            alert(lang === 'ru' ? 'Правильно!' : 'Correct!');
+          } else {
+            setFlagIncorrectAnswers(prev => {
+              const newCount = prev + 1;
+              localStorage.setItem('flagIncorrectAnswers', newCount);
+              return newCount;
+            });
+            console.log('Incorrect answer');
+            alert(lang === 'ru' ? 'Неправильно!' : 'Incorrect!');
+          }
+          setShowNext(true);
+          console.log('showNext after:', true);
+        } catch (error) {
+          console.error('Error in checkAnswer:', error);
+          alert('Error processing answer');
         }
-        setShowNext(true);
       };
 
       React.useEffect(() => {
@@ -716,7 +747,7 @@
           { id: 'flagQuizContainer' },
           React.createElement(
             'div',
-            { id: 'flagQuizScore', className: 'text-center text-lg mb-4' },
+            { id: 'flagQuizScore', className: 'text-center mb-2 p-2 rounded-lg border bg-[var(--suggestions-bg)] border-[var(--suggestions-border)]' },
             lang === 'ru'
               ? `Правильных: ${flagCorrectAnswers}, Неправильных: ${flagIncorrectAnswers}`
               : `Correct: ${flagCorrectAnswers}, Incorrect: ${flagIncorrectAnswers}`
@@ -724,8 +755,12 @@
           flagQuizQuestion && (
             React.createElement(
               'div',
-              { id: 'flagQuizQuestion', className: `text-center text-lg flex items-center justify-center gap-2 mb-4 ${flagQuizQuestion.error ? 'error animate-shake' : 'animate-flip-in'}` },
-              !flagQuizQuestion.error && React.createElement('img', { src: flagQuizQuestion.flag, alt: 'Flag', className: 'w-6 h-6', loading: 'lazy' }),
+              { id: 'flagQuizQuestion', className: `text-center flex items-center justify-center gap-2 mb-2 ${flagQuizQuestion.error ? 'error' : 'animate-slide-in'}` },
+              !flagQuizQuestion.error && React.createElement('img', {
+                src: flagQuizQuestion.flag,
+                alt: 'Flag',
+                className: 'w-6 h-6'
+              }),
               React.createElement('span', null, flagQuizQuestion.error ? flagQuizQuestion.message : (lang === 'ru' ? 'Назови страну' : 'Name the country'))
             )
           ),
@@ -734,12 +769,12 @@
             { id: 'flagQuizOptions', className: `grid gap-2 ${showNext ? 'fade-out' : ''}` },
             flagQuizOptions.map(option =>
               React.createElement(
-                Button,
+                'button',
                 {
                   key: option.text,
                   className: `quiz-option ${option.className || ''}`,
                   onClick: () => checkAnswer(option.text),
-                  disabled: option.disabled
+                  disabled: option.disabled || isTransitioning
                 },
                 option.text
               )
@@ -747,18 +782,27 @@
           ),
           React.createElement(
             'div',
-            { className: 'flex gap-2 mt-4' },
-            React.createElement(
-              Button,
-              { id: 'nextFlagQuestion', className: `w-full p-3 rounded-lg hover:shadow-lg transition transform duration-200 font-medium ${showNext ? '' : 'hidden'}`, onClick: startFlagQuiz },
-              lang === 'ru' ? 'Следующий вопрос' : 'Next Question'
+            { className: 'flex gap-2 mt-2' },
+            showNext && React.createElement(
+              'button',
+              {
+                id: 'nextFlagQuestion',
+                className: 'w-full p-2 rounded-lg bg-[var(--button-bg)] text-[var(--button-text)] next-button',
+                onClick: () => {
+                  console.log('Clicked Next button in flag quiz, showNext:', showNext, 'isTransitioning:', isTransitioning);
+                  startFlagQuiz();
+                },
+                disabled: isTransitioning
+              },
+              lang === 'ru' ? 'Следующий' : 'Next'
             ),
             React.createElement(
-              Button,
+              'button',
               {
                 id: 'resetFlagQuiz',
-                className: 'w-full p-3 rounded-lg hover:shadow-lg transition transform duration-200 font-medium',
+                className: 'w-full p-2 rounded-lg bg-[var(--button-bg)] text-[var(--button-text)]',
                 onClick: () => {
+                  console.log('Clicked Reset button in flag quiz');
                   setFlagCorrectAnswers(0);
                   setFlagIncorrectAnswers(0);
                   localStorage.setItem('flagCorrectAnswers', 0);
@@ -766,7 +810,7 @@
                   startFlagQuiz();
                 }
               },
-              lang === 'ru' ? 'Начать заново' : 'Start Over'
+              lang === 'ru' ? 'Сбросить' : 'Reset'
             )
           )
         )
@@ -774,7 +818,6 @@
     }
 
     function App() {
-      const tg = window.Telegram.WebApp;
       const [lang, setLang] = React.useState(localStorage.getItem('language') || 'ru');
       const [activeTab, setActiveTab] = React.useState(localStorage.getItem('activeTab') || 'search');
       const [countryInput, setCountryInput] = React.useState('');
@@ -786,78 +829,71 @@
       const [flagCorrectAnswers, setFlagCorrectAnswers] = React.useState(parseInt(localStorage.getItem('flagCorrectAnswers')) || 0);
       const [flagIncorrectAnswers, setFlagIncorrectAnswers] = React.useState(parseInt(localStorage.getItem('flagIncorrectAnswers')) || 0);
 
-      const updateTheme = () => {
-        const themeParams = tg.themeParams;
-        document.documentElement.style.setProperty('--bg-color', themeParams.bg_color || '#ffffff');
-        document.documentElement.style.setProperty('--text-color', themeParams.text_color || '#000000');
-        document.documentElement.style.setProperty('--input-bg', themeParams.secondary_bg_color || '#ffffff');
-        document.documentElement.style.setProperty('--input-border', themeParams.hint_color || '#d1d5db');
-        document.documentElement.style.setProperty('--button-bg', themeParams.button_color || '#3390ec');
-        document.documentElement.style.setProperty('--button-text', themeParams.button_text_color || '#ffffff');
-        document.documentElement.style.setProperty('--button-hover', themeParams.button_color ? (themeParams.button_color + 'cc') : '#2563eb');
-        document.documentElement.style.setProperty('--suggestions-bg', themeParams.secondary_bg_color || '#ffffff');
-        document.documentElement.style.setProperty('--suggestions-border', themeParams.hint_color || '#d1d5db');
-        document.documentElement.style.setProperty('--suggestions-hover', themeParams.hint_color ? (themeParams.hint_color + '33') : '#f3f4f6');
-        document.documentElement.style.setProperty('--theme-button-bg', themeParams.secondary_bg_color || '#e5e7eb');
-        document.documentElement.style.setProperty('--theme-button-text', themeParams.text_color || '#374151');
-      };
-
-      React.useEffect(() => {
-        updateTheme();
-        tg.onEvent('themeChanged', updateTheme);
-        return () => {
-          tg.offEvent('themeChanged', updateTheme);
-        };
-      }, []);
-
       const toggleLanguage = () => {
-        const newLang = lang === 'en' ? 'ru' : 'en';
-        setLang(newLang);
-        localStorage.setItem('language', newLang);
-        setCorrectAnswers(0);
-        setIncorrectAnswers(0);
-        setFlagCorrectAnswers(0);
-        setFlagIncorrectAnswers(0);
-        localStorage.setItem('correctAnswers', 0);
-        localStorage.setItem('incorrectAnswers', 0);
-        localStorage.setItem('flagCorrectAnswers', 0);
-        localStorage.setItem('flagIncorrectAnswers', 0);
-        setCountryInput('');
-        setResult(null);
-        setCountryInfo(null);
-        setSuggestions([]);
+        try {
+          const newLang = lang === 'en' ? 'ru' : 'en';
+          setLang(newLang);
+          localStorage.setItem('language', newLang);
+          setCorrectAnswers(0);
+          setIncorrectAnswers(0);
+          setFlagCorrectAnswers(0);
+          setFlagIncorrectAnswers(0);
+          localStorage.setItem('correctAnswers', 0);
+          localStorage.setItem('incorrectAnswers', 0);
+          localStorage.setItem('flagCorrectAnswers', 0);
+          localStorage.setItem('flagIncorrectAnswers', 0);
+          setCountryInput('');
+          setResult(null);
+          setCountryInfo(null);
+          setSuggestions([]);
+          console.log('Language changed to:', newLang);
+          alert(`Language: ${newLang === 'ru' ? 'Русский' : 'English'}`);
+        } catch (error) {
+          console.error('Error in toggleLanguage:', error);
+          alert('Error changing language');
+        }
       };
 
       return (
         React.createElement(
-          AppRoot,
-          { className: 'w-full max-w-sm p-6' },
+          ErrorBoundary,
+          null,
           React.createElement(
             'div',
-            { className: 'flex justify-between items-center mb-4' },
-            React.createElement('h1', { className: 'text-3xl font-semibold animate-pulse' }, lang === 'ru' ? 'Столицы стран' : 'Country Capitals'),
+            { className: 'w-full max-w-sm p-4' },
             React.createElement(
-              Button,
-              { id: 'langToggle', className: 'p-2 rounded-full transition transform duration-200', onClick: toggleLanguage },
-              React.createElement('span', { id: 'langIcon' }, lang === 'ru' ? '🇷🇺' : '🇬🇧')
-            )
-          ),
-          React.createElement(
-            'nav',
-            { className: 'flex gap-2 mb-4' },
-            React.createElement(Button, { className: `tab ${activeTab === 'search' ? 'active' : ''}`, onClick: () => { setActiveTab('search'); localStorage.setItem('activeTab', 'search'); } }, lang === 'ru' ? 'Поиск' : 'Search'),
-            React.createElement(Button, { className: `tab ${activeTab === 'quiz' ? 'active' : ''}`, onClick: () => { setActiveTab('quiz'); localStorage.setItem('activeTab', 'quiz'); } }, lang === 'ru' ? 'Викторина' : 'Quiz'),
-            React.createElement(Button, { className: `tab ${activeTab === 'flagQuiz' ? 'active' : ''}`, onClick: () => { setActiveTab('flagQuiz'); localStorage.setItem('activeTab', 'flagQuiz'); } }, lang === 'ru' ? 'Флаговая викторина' : 'Flag Quiz')
-          ),
-          activeTab === 'search' && React.createElement(SearchTab, { lang, setResult, setCountryInfo, countryInput, setCountryInput, suggestions, setSuggestions }),
-          activeTab === 'quiz' && React.createElement(QuizTab, { lang, correctAnswers, incorrectAnswers, setCorrectAnswers, setIncorrectAnswers }),
-          activeTab === 'flagQuiz' && React.createElement(FlagQuizTab, { lang, flagCorrectAnswers, flagIncorrectAnswers, setFlagCorrectAnswers, setFlagIncorrectAnswers })
+              'div',
+              { className: 'flex justify-between items-center mb-2' },
+              React.createElement('h1', { className: 'text-2xl font-semibold animate-pulse' }, lang === 'ru' ? 'Столицы стран' : 'Country Capitals'),
+              React.createElement(
+                'button',
+                { id: 'langToggle', className: 'p-2 rounded-full bg-[var(--theme-button-bg)] text-[var(--theme-button-text)]', onClick: toggleLanguage },
+                lang === 'ru' ? '🇷🇺' : '🇬🇧'
+              )
+            ),
+            React.createElement(
+              'nav',
+              { className: 'flex gap-2 mb-2' },
+              React.createElement('button', { className: `tab ${activeTab === 'search' ? 'active' : ''}`, onClick: () => { setActiveTab('search'); localStorage.setItem('activeTab', 'search'); } }, lang === 'ru' ? 'Поиск' : 'Search'),
+              React.createElement('button', { className: `tab ${activeTab === 'quiz' ? 'active' : ''}`, onClick: () => { setActiveTab('quiz'); localStorage.setItem('activeTab', 'quiz'); } }, lang === 'ru' ? 'Викторина' : 'Quiz'),
+              React.createElement('button', { className: `tab ${activeTab === 'flagQuiz' ? 'active' : ''}`, onClick: () => { setActiveTab('flagQuiz'); localStorage.setItem('activeTab', 'flagQuiz'); } }, lang === 'ru' ? 'Флаги' : 'Flags')
+            ),
+            activeTab === 'search' && React.createElement(SearchTab, { lang, result, setResult, countryInfo, setCountryInfo, countryInput, setCountryInput, suggestions, setSuggestions }),
+            activeTab === 'quiz' && React.createElement(QuizTab, { lang, correctAnswers, incorrectAnswers, setCorrectAnswers, setIncorrectAnswers }),
+            activeTab === 'flagQuiz' && React.createElement(FlagQuizTab, { lang, flagCorrectAnswers, flagIncorrectAnswers, setFlagCorrectAnswers, setFlagIncorrectAnswers })
+          )
         )
       );
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(App));
+    try {
+      console.log('Rendering app');
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(React.createElement(App));
+    } catch (error) {
+      console.error('Rendering error:', error);
+      alert('App rendering error. Check console.');
+    }
   </script>
 </body>
 </html>
